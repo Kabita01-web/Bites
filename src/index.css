@@ -1,36 +1,56 @@
 @import "tailwindcss";
 
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&display=swap");
+
 @theme {
-  --color-primary: #7B3F00;
-  --color-secondary: #F8F5F2;
-  --color-accent: #CBA135;
-  --color-text-primary: #2B2B2B;
-  
+  --color-primary: #7b3f00;
+  --color-secondary: #f8f5f2;
+  --color-accent: #cba135;
+  --color-text-primary: #2b2b2b;
+
   --font-serif: "Playfair Display", serif;
   --font-sans: "Inter", sans-serif;
 }
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&display=swap');
-
 @layer base {
   body {
-    @apply font-sans text-text-primary bg-white;
+    font-family: var(--font-sans);
+    color: var(--color-text-primary);
+    background-color: white;
   }
 
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-serif text-text-primary;
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-serif);
+    color: var(--color-text-primary);
   }
 }
 
 .nav-link {
-  @apply relative text-text-primary hover:text-primary transition-colors duration-300;
+  position: relative;
+  color: var(--color-text-primary);
+  transition: color 0.3s;
+}
+
+.nav-link:hover {
+  color: var(--color-primary);
 }
 
 .nav-link::after {
-  content: '';
-  @apply absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300;
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--color-primary);
+  transition: width 0.3s;
 }
 
 .nav-link:hover::after {
-  @apply w-full;
+  width: 100%;
 }
