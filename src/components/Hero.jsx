@@ -1,6 +1,7 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import React from "react";
+// eslint-disable-next-line no-unused-vars
+import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 
 const Hero = () => {
   return (
@@ -23,23 +24,27 @@ const Hero = () => {
           transition={{ duration: 0.8, ease: "easeOut" }}
           className="max-w-3xl text-white"
         >
-          <motion.h1 
+          <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.8 }}
             className="text-5xl md:text-7xl lg:text-8xl font-serif font-bold mb-6 leading-tight"
           >
-            Delicious Moments at <span className="text-accent underline decoration-accent/30 underline-offset-8">Bites</span>
+            Delicious Moments at{" "}
+            <span className="text-accent underline decoration-accent/30 underline-offset-8">
+              Bites
+            </span>
           </motion.h1>
-          <motion.p 
+          <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.8 }}
             className="text-xl md:text-2xl opacity-90 mb-10 leading-relaxed font-light"
           >
-            Fresh ingredients. Authentic flavors. Memorable dining experiences crafted with passion.
+            Fresh ingredients. Authentic flavors. Memorable dining experiences
+            crafted with passion.
           </motion.p>
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6, duration: 0.8 }}

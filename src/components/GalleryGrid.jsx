@@ -1,5 +1,6 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React from "react";
+// eslint-disable-next-line no-unused-vars
+import { motion } from "framer-motion";
 
 const GalleryGrid = ({ images }) => {
   return (
@@ -15,11 +16,13 @@ const GalleryGrid = ({ images }) => {
         >
           <img
             src={img.url}
-            alt={img.alt || 'Gallery image'}
+            alt={img.alt || "Gallery image"}
             className="w-full object-cover transition-transform duration-700 group-hover:scale-110"
           />
           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-             <span className="text-white font-serif italic text-xl border-b border-white pb-1">{img.category || 'Bites'}</span>
+            <span className="text-white font-serif italic text-xl border-b border-white pb-1">
+              {img.category || "Bites"}
+            </span>
           </div>
         </motion.div>
       ))}
