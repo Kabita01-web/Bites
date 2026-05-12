@@ -1,16 +1,22 @@
-import React from 'react';
-import { Quote, Star } from 'lucide-react';
+import React from "react";
+import { Quote, Star } from "lucide-react";
 // eslint-disable-next-line no-unused-vars
-import { motion } from 'framer-motion';
+import { motion } from "framer-motion";
+import { fallbackImage, handleImageError } from "../utils/imageFallback";
 
 const Testimonial = ({ name, role, review, image }) => {
   return (
-    <motion.div 
+    <motion.div
       whileHover={{ y: -5 }}
       className="bg-white p-10 rounded-3xl shadow-sm border border-gray-100 flex flex-col items-center text-center max-w-lg mx-auto"
     >
       <div className="w-20 h-20 rounded-full overflow-hidden mb-6 border-4 border-secondary shadow-md">
-        <img src={image} alt={name} className="w-full h-full object-cover" />
+        <img
+          src={image || fallbackImage}
+          alt={name}
+          onError={handleImageError}
+          className="w-full h-full object-cover"
+        />
       </div>
       <div className="flex gap-1 mb-4">
         {[...Array(5)].map((_, i) => (
@@ -23,7 +29,9 @@ const Testimonial = ({ name, role, review, image }) => {
       </p>
       <div>
         <h5 className="text-xl font-serif font-bold text-gray-800">{name}</h5>
-        <p className="text-primary font-medium text-sm tracking-widest uppercase">{role}</p>
+        <p className="text-primary font-medium text-sm tracking-widest uppercase">
+          {role}
+        </p>
       </div>
     </motion.div>
   );
