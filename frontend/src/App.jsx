@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import {
-  BrowserRouter as Router,
+  BrowserRouter as Router, // ✅ Router is here - this is fine
   Routes,
   Route,
   useLocation,
@@ -14,6 +14,8 @@ import Gallery from "./pages/Gallery";
 import Contact from "./pages/Contact";
 import Reservation from "./pages/Reservation";
 import MenuDetails from "./pages/MenuDetails";
+import Login from "./pages/auth/Login";
+import Register from "./pages/auth/Register";
 
 // Scroll to top on route change
 const ScrollToTop = () => {
@@ -27,6 +29,8 @@ const ScrollToTop = () => {
 function App() {
   return (
     <Router>
+      {" "}
+      {/* ✅ Only ONE Router in the entire app */}
       <ScrollToTop />
       <div className="flex flex-col min-h-screen">
         <Navbar />
@@ -39,6 +43,8 @@ function App() {
             <Route path="/contact" element={<Contact />} />
             <Route path="/reservation" element={<Reservation />} />
             <Route path="/menu/:dishName" element={<MenuDetails />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
           </Routes>
         </main>
         <Footer />
