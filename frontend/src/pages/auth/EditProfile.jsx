@@ -61,7 +61,7 @@ const EditProfile = () => {
         payload.newPassword = formData.newPassword;
       }
 
-      const data = await updateProfile(payload);
+      const data = await updateProfile(payload, user._id);
       updateUser(data.user);
       setSuccess("Profile updated successfully!");
 
@@ -70,7 +70,7 @@ const EditProfile = () => {
       setError(
         err.response?.data?.message ||
           err.message ||
-          "Failed to update profile"
+          "Failed to update profile",
       );
     } finally {
       setLoading(false);

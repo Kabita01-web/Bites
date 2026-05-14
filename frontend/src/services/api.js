@@ -24,9 +24,8 @@ export const getProfile = async () => {
   const response = await instance.get("/auth/profile");
   return response.data;
 };
-
-export const updateProfile = async (userData) => {
-  const response = await instance.put("/auth/profile", userData);
+export const updateProfile = async (userData, userId) => {
+  const response = await instance.put(`/user/editprofile/${userId}`, userData);
   return response.data;
 };
 
