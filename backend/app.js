@@ -4,6 +4,7 @@ import mongoose from "mongoose";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import authRoute from "./routes/authRoute.js";
+import userRoute from "./routes/userRoute.js";
 
 dotenv.config();
 
@@ -26,7 +27,7 @@ app.get("/api/test", (req, res) => {
 });
 
 app.use("/api/auth", authRoute);
-
+app.use("/api/user", userRoute);
 mongoose
   .connect(process.env.MONGODB_URI)
   .then(() => {
