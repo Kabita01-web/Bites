@@ -1,7 +1,13 @@
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 
-const protect = async (req, res, next) => {
+export const ROLES = {
+  USER: "user",
+  MODERATOR: "moderator",
+  ADMIN: "admin",
+};
+
+export const protect = async (req, res, next) => {
   try {
     const token = req.cookies.token;
 
@@ -22,4 +28,21 @@ const protect = async (req, res, next) => {
   }
 };
 
+export const authorize = (...roles) => {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({ message: "Not authorized" });
+    }
+
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({
+        message: `Access denied. ${req.user.role} role cannot access this dashboard`,
+      });
+    }
+
+    next();
+  };
+};
+
+// Also keep default export for backward compatibility
 export default protect;

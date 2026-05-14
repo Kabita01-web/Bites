@@ -1,4 +1,10 @@
 import React, { createContext, useState, useEffect } from "react";
+import {
+  loginUser,
+  registerUser,
+  logoutUser,
+  getProfile,
+} from "../services/api.js";
 
 export const AuthContext = createContext();
 
@@ -6,67 +12,49 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    // Check if user is logged in on mount
-    const storedUser = localStorage.getItem("user");
-    const token = localStorage.getItem("token");
+  const normalizeUser = (userData) => ({
+    ...userData,
+    role: userData?.role || "user",
+  });
 
-    if (storedUser && token) {
-      setUser(JSON.parse(storedUser));
-    }
-    setLoading(false);
+  // Check if user is already logged in on app load
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const data = await getProfile();
+        setUser(normalizeUser(data.user));
+      } catch (error) {
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUser();
   }, []);
 
   const login = async (email, password) => {
-    // Simulate API call
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        // Demo authentication
-        if (email === "demo@example.com" && password === "demo123") {
-          const user = { id: 1, email, username: "Demo User", role: "user" };
-          const token = "demo-token-123456";
-
-          localStorage.setItem("user", JSON.stringify(user));
-          localStorage.setItem("token", token);
-          setUser(user);
-          resolve(user);
-        } else {
-          reject(new Error("Invalid email or password"));
-        }
-      }, 1000);
-    });
+    const data = await loginUser({ email, password });
+    setUser(normalizeUser(data.user));
   };
 
   const register = async (username, email, password) => {
-    // Simulate API call
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        // Check if email already exists (demo)
-        if (email === "demo@example.com") {
-          reject(new Error("Email already exists"));
-        } else {
-          const user = { id: Date.now(), email, username, role: "user" };
-          const token = "token-" + Date.now();
-
-          localStorage.setItem("user", JSON.stringify(user));
-          localStorage.setItem("token", token);
-          setUser(user);
-          resolve(user);
-        }
-      }, 1000);
+    await registerUser({
+      username,
+      email,
+      password,
+      confirmPassword: password,
     });
+    const data = await loginUser({ email, password });
+    setUser(normalizeUser(data.user));
   };
 
-  const logout = () => {
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
+  const logout = async () => {
+    await logoutUser();
     setUser(null);
   };
 
   const updateUser = (updatedData) => {
-    const updatedUser = { ...user, ...updatedData };
-    localStorage.setItem("user", JSON.stringify(updatedUser));
-    setUser(updatedUser);
+    setUser((prev) => normalizeUser({ ...prev, ...updatedData }));
   };
 
   return (

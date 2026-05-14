@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useContext } from "react";
 import {
   BrowserRouter as Router, // ✅ Router is here - this is fine
   Routes,
@@ -16,6 +16,16 @@ import Reservation from "./pages/Reservation";
 import MenuDetails from "./pages/MenuDetails";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
+import Profile from "./pages/auth/Profile";
+import EditProfile from "./pages/auth/EditProfile";
+import { AuthContext } from "./context/AuthContext";
+import ProtectedRoute from "./components/ProtectedRoute";
+import DashboardLayout from "./pages/dashboard/DashboardLayout";
+import AdminDashboard from "./pages/dashboard/AdminDashboard";
+import ModeratorDashboard from "./pages/dashboard/ModeratorDashboard";
+
+import UserManagement from "./pages/dashboard/UserManagement";
+import SystemStats from "./pages/dashboard/SystemStats";
 
 // Scroll to top on route change
 const ScrollToTop = () => {
@@ -24,6 +34,19 @@ const ScrollToTop = () => {
     window.scrollTo(0, 0);
   }, [pathname]);
   return null;
+};
+
+const DashboardHome = () => {
+  const { user } = useContext(AuthContext);
+
+  if (!user) return null;
+
+  switch (user.role) {
+    case "admin":
+      return <AdminDashboard />;
+    case "moderator":
+      return <ModeratorDashboard />;
+  }
 };
 
 function App() {
@@ -45,6 +68,34 @@ function App() {
             <Route path="/menu/:dishName" element={<MenuDetails />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/edit-profile" element={<EditProfile />} />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "moderator"]}>
+                  <DashboardLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<DashboardHome />} />
+              <Route
+                path="users"
+                element={
+                  <ProtectedRoute allowedRoles={["admin", "moderator"]}>
+                    <UserManagement />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="stats"
+                element={
+                  <ProtectedRoute allowedRoles={["admin"]}>
+                    <SystemStats />
+                  </ProtectedRoute>
+                }
+              />
+            </Route>
           </Routes>
         </main>
         <Footer />

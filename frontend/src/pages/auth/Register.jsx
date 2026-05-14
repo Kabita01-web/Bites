@@ -61,9 +61,7 @@ const Register = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div
-        className="max-w-md w-full space-y-8 bg-white rounded-2xl shadow-2xl p-8 md:p-10"
-      >
+      <div className="max-w-md w-full space-y-8 bg-white rounded-2xl shadow-2xl p-8 md:p-10">
         <div className="text-center">
           <div className="flex justify-center">
             <div className="bg-primary p-3 rounded-full inline-flex">
@@ -80,13 +78,13 @@ const Register = () => {
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {error && (
-            <motion.div
+            <div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               className="rounded-lg bg-red-50 p-4 border border-red-200"
             >
               <div className="text-sm text-red-700 font-medium">{error}</div>
-            </motion.div>
+            </div>
           )}
 
           <div className="space-y-4">

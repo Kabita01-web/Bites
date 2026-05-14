@@ -220,14 +220,16 @@ const Navbar = () => {
                         <User size={15} className="text-gray-400" />
                         My Profile
                       </Link>
-                      <Link
-                        to="/dashboard"
-                        onClick={() => setIsProfileOpen(false)}
-                        className="dropdown-item"
-                      >
-                        <LayoutDashboard size={15} className="text-gray-400" />
-                        Dashboard
-                      </Link>
+                      {user?.role !== "user" && (
+                        <Link
+                          to="/dashboard"
+                          onClick={() => setIsProfileOpen(false)}
+                          className="dropdown-item"
+                        >
+                          <LayoutDashboard size={15} className="text-gray-400" />
+                          Dashboard
+                        </Link>
+                      )}
                       <div className="auth-divider" />
                       <button
                         onClick={handleLogout}
@@ -356,14 +358,16 @@ const Navbar = () => {
                     >
                       <User size={16} className="text-gray-400" /> My Profile
                     </Link>
-                    <Link
-                      to="/dashboard"
-                      onClick={() => setIsOpen(false)}
-                      className="flex items-center gap-3 px-3 py-3 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors text-sm font-medium"
-                    >
-                      <LayoutDashboard size={16} className="text-gray-400" />{" "}
-                      Dashboard
-                    </Link>
+                    {user?.role !== "user" && (
+                      <Link
+                        to="/dashboard"
+                        onClick={() => setIsOpen(false)}
+                        className="flex items-center gap-3 px-3 py-3 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors text-sm font-medium"
+                      >
+                        <LayoutDashboard size={16} className="text-gray-400" />{" "}
+                        Dashboard
+                      </Link>
+                    )}
 
                     <div className="h-px bg-gray-100 my-2" />
 
