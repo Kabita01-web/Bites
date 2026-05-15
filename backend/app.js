@@ -5,6 +5,8 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import authRoute from "./routes/authRoute.js";
 import userRoute from "./routes/userRoute.js";
+import menuRoute from "./routes/menuRoute.js";
+import menuItemRoute from "./routes/menuItemRoute.js";
 
 dotenv.config();
 
@@ -28,6 +30,8 @@ app.get("/api/test", (req, res) => {
 
 app.use("/api/auth", authRoute);
 app.use("/api/user", userRoute);
+app.use("/api/menus", menuRoute);
+app.use("/api/menu-items", menuItemRoute);
 mongoose
   .connect(process.env.MONGODB_URI)
   .then(() => {
