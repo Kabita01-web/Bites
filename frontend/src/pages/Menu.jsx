@@ -1,205 +1,41 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from "framer-motion";
-import MenuItem from "../components/MenuItem";
 import { Link } from "react-router-dom";
+import MenuItem from "../components/MenuItem";
+import { getMenuItems } from "../services/api";
 
 const Menu = () => {
-  const categories = [
-    "All",
-    "Starters",
-    "Main Course",
-    "Burgers",
-    "Pasta",
-    "Desserts",
-    "Drinks",
-  ];
+  const [allDishes, setAllDishes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
 
-  const menuItems = {
-    Starters: [
-      {
-        name: "Truffle Arancini",
-        price: "$12",
-        description:
-          "Crispy risotto balls with wild truffle and mozzarella. A perfect start to your meal.",
-        ingredients: "Arborio rice, Black Truffle, Mozzarella, Parmesan",
-        image:
-          "https://images.unsplash.com/photo-1541529086526-db283c563270?auto=format&fit=crop&q=80&w=400",
-        spiceLevel: "Mild",
-        dietary: ["Vegetarian"],
-      },
-      {
-        name: "Burrata Bloom",
-        price: "$16",
-        description: "Fresh burrata with heirloom tomatoes and basil emulsion.",
-        ingredients:
-          "Burrata, Heirloom Tomatoes, Basil, Extra Virgin Olive Oil",
-        image:
-          "https://images.unsplash.com/photo-1594911771100-24422da8066f?auto=format&fit=crop&q=80&w=400",
-        spiceLevel: "Mild",
-        dietary: ["Vegetarian", "Gluten-Free"],
-      },
-      {
-        name: "Crispy Calamari",
-        price: "$14",
-        description:
-          "Lightly fried calamari served with spicy aioli and lemon.",
-        ingredients: "Calamari, Lemon, Spicy Aioli, Parsley",
-        image:
-          "https://images.unsplash.com/photo-1600891964599-f61ba0e24092?auto=format&fit=crop&q=80&w=400",
-        spiceLevel: "Medium",
-        dietary: [],
-      },
-    ],
-    "Main Course": [
-      {
-        name: "Heritage Ribeye Steak",
-        price: "$48",
-        description:
-          "45-day dry-aged ribeye with bone marrow butter and roasted garlic.",
-        ingredients: "Dry-aged Beef, Bone Marrow, Herbs, Garlic",
-        image:
-          "https://images.unsplash.com/photo-1546241072-48010ad28c2c?auto=format&fit=crop&q=80&w=400",
-        spiceLevel: "Mild",
-        dietary: ["Gluten-Free"],
-      },
-      {
-        name: "Pan Seared Sea Bass",
-        price: "$36",
-        description:
-          "Crispy skin sea bass with citrus pea purée and microgreens.",
-        ingredients: "Wild Sea Bass, Sweet Peas, Mint, Lemon, Microgreens",
-        image:
-          "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&q=80&w=400",
-        spiceLevel: "Mild",
-        dietary: ["Gluten-Free", "Dairy-Free"],
-      },
-      {
-        name: "Braised Lamb Shank",
-        price: "$42",
-        description:
-          "Slow-braised lamb with rosemary red wine sauce and creamy polenta.",
-        ingredients: "Lamb, Rosemary, Red Wine, Root Vegetables, Polenta",
-        image:
-          "https://images.unsplash.com/photo-1545247181-516773cae754?auto=format&fit=crop&q=80&w=400",
-        spiceLevel: "Mild",
-        dietary: ["Gluten-Free"],
-      },
-    ],
-    Burgers: [
-      {
-        name: "Wagyu Signature",
-        price: "$24",
-        description:
-          "Our finest wagyu burger with caramelized onions and truffle aioli.",
-        ingredients:
-          "Wagyu Beef, Brioche, Caramelized Onions, Comté Cheese, Truffle Aioli",
-        image:
-          "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80&w=400",
-        spiceLevel: "Mild",
-        dietary: [],
-      },
-      {
-        name: "Mushroom Truffle Burger",
-        price: "$18",
-        description: "Plant-based patty with truffle aioli and arugula.",
-        ingredients: "Mushroom Patty, Truffle Oil, Arugula, Brioche Bun",
-        image:
-          "https://images.unsplash.com/photo-1571091718767-18b5b1457add?auto=format&fit=crop&q=80&w=400",
-        spiceLevel: "Mild",
-        dietary: ["Vegetarian"],
-      },
-    ],
-    Pasta: [
-      {
-        name: "Lobster Linguine",
-        price: "$32",
-        description:
-          "Hand-made pasta with fresh claw meat in a spicy tomato sauce.",
-        ingredients: "Lobster, Linguine, Chili, Garlic, San Marzano Tomatoes",
-        image:
-          "https://images.unsplash.com/photo-1563379091339-03b21ab4a1f8?auto=format&fit=crop&q=80&w=400",
-        spiceLevel: "Spicy",
-        dietary: [],
-      },
-      {
-        name: "Truffle Carbonara",
-        price: "$26",
-        description:
-          "Creamy carbonara with black truffle shavings and guanciale.",
-        ingredients:
-          "Eggs, Pecorino Romano, Guanciale, Black Truffle, Spaghetti",
-        image:
-          "https://images.unsplash.com/photo-1551183053-bf91a1d81141?auto=format&fit=crop&q=80&w=400",
-        spiceLevel: "Mild",
-        dietary: [],
-      },
-    ],
-    Desserts: [
-      {
-        name: "Chocolate Velvet",
-        price: "$14",
-        description:
-          "Warm lava cake with vanilla bean gelato and fresh berries.",
-        ingredients: "70% Cocoa, Vanilla Gelato, Mixed Berries, Powdered Sugar",
-        image:
-          "https://images.unsplash.com/photo-1624353365286-3f8d62daad51?auto=format&fit=crop&q=80&w=400",
-        spiceLevel: "Sweet",
-        dietary: ["Vegetarian"],
-      },
-      {
-        name: "Tiramisu",
-        price: "$12",
-        description: "Classic Italian dessert with mascarpone and espresso.",
-        ingredients: "Mascarpone, Espresso, Ladyfingers, Cocoa Powder",
-        image:
-          "https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?auto=format&fit=crop&q=80&w=400",
-        spiceLevel: "Sweet",
-        dietary: ["Vegetarian"],
-      },
-    ],
-    Drinks: [
-      {
-        name: "Smoked Old Fashioned",
-        price: "$18",
-        description: "Premium bourbon with maple smoke and walnut bitters.",
-        ingredients: "Bourbon, Maple Syrup, Walnut Bitters, Orange Peel",
-        image:
-          "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&q=80&w=400",
-        spiceLevel: "None",
-        dietary: ["Vegan"],
-      },
-      {
-        name: "Espresso Martini",
-        price: "$16",
-        description: "Vodka, fresh espresso, and coffee liqueur.",
-        ingredients: "Vodka, Fresh Espresso, Coffee Liqueur, Coffee Beans",
-        image:
-          "https://images.unsplash.com/photo-1514365893784-7309e1278a4f?auto=format&fit=crop&q=80&w=400",
-        spiceLevel: "None",
-        dietary: ["Vegan"],
-      },
-    ],
-  };
+  useEffect(() => {
+    const fetchMenu = async () => {
+      try {
+        const data = await getMenuItems();
+        setAllDishes(Array.isArray(data) ? data : []);
+      } catch {
+        setError("Could not load the menu. Ensure the server is running.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMenu();
+  }, []);
 
-  const getAllDishes = () => {
-    const allDishes = [];
-    Object.keys(menuItems).forEach((category) => {
-      menuItems[category].forEach((dish) => {
-        allDishes.push({ ...dish, category });
-      });
-    });
-    return allDishes;
-  };
+  // Build category list dynamically from the data itself,
+  // so adding a new category in menu.json doesn't require a code change.
+  const categories = [
+    "All",
+    ...Array.from(new Set(allDishes.map((item) => item.category))),
+  ];
 
   const getCurrentItems = () => {
-    if (activeCategory === "All") return getAllDishes();
-    return (menuItems[activeCategory] || []).map((item) => ({
-      ...item,
-      category: activeCategory,
-    }));
+    if (activeCategory === "All") return allDishes;
+    return allDishes.filter((item) => item.category === activeCategory);
   };
 
   let currentItems = getCurrentItems();
@@ -210,6 +46,22 @@ const Menu = () => {
         item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.ingredients.toLowerCase().includes(searchTerm.toLowerCase()),
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="pt-28 pb-32 bg-gray-50 min-h-screen flex items-center justify-center">
+        <p className="text-gray-500">Loading menu...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="pt-28 pb-32 bg-gray-50 min-h-screen flex items-center justify-center">
+        <p className="text-red-600">{error}</p>
+      </div>
     );
   }
 
@@ -339,7 +191,7 @@ const Menu = () => {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {currentItems.map((item, index) => (
                   <Link
-                    key={index}
+                    key={item.id ?? index}
                     to={`/menu/${encodeURIComponent(item.name.toLowerCase())}`}
                     className="relative block no-underline group"
                   >

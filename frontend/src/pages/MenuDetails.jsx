@@ -1,307 +1,40 @@
-import React, { useState } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+// eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { getMenuItems } from "../services/api";
 
 const MenuDetails = () => {
   const { dishName } = useParams();
   const navigate = useNavigate();
+
+  const [allDishes, setAllDishes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
   const [quantity, setQuantity] = useState(1);
   const [specialInstructions, setSpecialInstructions] = useState("");
   const [addedToCart, setAddedToCart] = useState(false);
 
-  // This should match the menu data from your Menu page
-  // Ideally, you'd move this to a shared data file
-  const menuItems = {
-    Starters: [
-      {
-        name: "Truffle Arancini",
-        price: "$12",
-        priceValue: 12,
-        description:
-          "Crispy risotto balls with wild truffle and mozzarella. A perfect start to your meal.",
-        ingredients: "Arborio rice, Black Truffle, Mozzarella, Parmesan",
-        image:
-          "https://images.unsplash.com/photo-1541529086526-db283c563270?auto=format&fit=crop&q=80&w=400",
-        spiceLevel: "Mild",
-        dietary: ["Vegetarian"],
-        nutritionalInfo: {
-          calories: "320 kcal",
-          protein: "12g",
-          carbs: "35g",
-          fat: "16g",
-        },
-        allergens: ["Dairy", "Gluten"],
-      },
-      {
-        name: "Burrata Bloom",
-        price: "$16",
-        priceValue: 16,
-        description: "Fresh burrata with heirloom tomatoes and basil emulsion.",
-        ingredients:
-          "Burrata, Heirloom Tomatoes, Basil, Extra Virgin Olive Oil",
-        image:
-          "https://images.unsplash.com/photo-1594911771100-24422da8066f?auto=format&fit=crop&q=80&w=400",
-        spiceLevel: "Mild",
-        dietary: ["Vegetarian", "Gluten-Free"],
-        nutritionalInfo: {
-          calories: "380 kcal",
-          protein: "14g",
-          carbs: "8g",
-          fat: "28g",
-        },
-        allergens: ["Dairy"],
-      },
-      {
-        name: "Crispy Calamari",
-        price: "$14",
-        priceValue: 14,
-        description:
-          "Lightly fried calamari served with spicy aioli and lemon.",
-        ingredients: "Calamari, Lemon, Spicy Aioli, Parsley",
-        image:
-          "https://images.unsplash.com/photo-1600891964599-f61ba0e24092?auto=format&fit=crop&q=80&w=400",
-        spiceLevel: "Medium",
-        dietary: [],
-        nutritionalInfo: {
-          calories: "450 kcal",
-          protein: "22g",
-          carbs: "28g",
-          fat: "24g",
-        },
-        allergens: ["Shellfish", "Eggs"],
-      },
-    ],
-    "Main Course": [
-      {
-        name: "Heritage Ribeye Steak",
-        price: "$48",
-        priceValue: 48,
-        description:
-          "45-day dry-aged ribeye with bone marrow butter and roasted garlic.",
-        ingredients: "Dry-aged Beef, Bone Marrow, Herbs, Garlic",
-        image:
-          "https://images.unsplash.com/photo-1546241072-48010ad28c2c?auto=format&fit=crop&q=80&w=400",
-        spiceLevel: "Mild",
-        dietary: ["Gluten-Free"],
-        nutritionalInfo: {
-          calories: "850 kcal",
-          protein: "62g",
-          carbs: "2g",
-          fat: "58g",
-        },
-        allergens: ["Dairy"],
-      },
-      {
-        name: "Pan Seared Sea Bass",
-        price: "$36",
-        priceValue: 36,
-        description:
-          "Crispy skin sea bass with citrus pea purée and microgreens.",
-        ingredients: "Wild Sea Bass, Sweet Peas, Mint, Lemon, Microgreens",
-        image:
-          "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&q=80&w=400",
-        spiceLevel: "Mild",
-        dietary: ["Gluten-Free", "Dairy-Free"],
-        nutritionalInfo: {
-          calories: "480 kcal",
-          protein: "42g",
-          carbs: "18g",
-          fat: "24g",
-        },
-        allergens: ["Fish"],
-      },
-      {
-        name: "Braised Lamb Shank",
-        price: "$42",
-        priceValue: 42,
-        description:
-          "Slow-braised lamb with rosemary red wine sauce and creamy polenta.",
-        ingredients: "Lamb, Rosemary, Red Wine, Root Vegetables, Polenta",
-        image:
-          "https://images.unsplash.com/photo-1545247181-516773cae754?auto=format&fit=crop&q=80&w=400",
-        spiceLevel: "Mild",
-        dietary: ["Gluten-Free"],
-        nutritionalInfo: {
-          calories: "720 kcal",
-          protein: "48g",
-          carbs: "32g",
-          fat: "38g",
-        },
-        allergens: ["Dairy"],
-      },
-    ],
-    Burgers: [
-      {
-        name: "Wagyu Signature",
-        price: "$24",
-        priceValue: 24,
-        description:
-          "Our finest wagyu burger with caramelized onions and truffle aioli.",
-        ingredients:
-          "Wagyu Beef, Brioche, Caramelized Onions, Comté Cheese, Truffle Aioli",
-        image:
-          "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80&w=400",
-        spiceLevel: "Mild",
-        dietary: [],
-        nutritionalInfo: {
-          calories: "980 kcal",
-          protein: "52g",
-          carbs: "45g",
-          fat: "62g",
-        },
-        allergens: ["Gluten", "Dairy", "Eggs"],
-      },
-      {
-        name: "Mushroom Truffle Burger",
-        price: "$18",
-        priceValue: 18,
-        description: "Plant-based patty with truffle aioli and arugula.",
-        ingredients: "Mushroom Patty, Truffle Oil, Arugula, Brioche Bun",
-        image:
-          "https://images.unsplash.com/photo-1571091718767-18b5b1457add?auto=format&fit=crop&q=80&w=400",
-        spiceLevel: "Mild",
-        dietary: ["Vegetarian"],
-        nutritionalInfo: {
-          calories: "680 kcal",
-          protein: "24g",
-          carbs: "58g",
-          fat: "38g",
-        },
-        allergens: ["Gluten", "Dairy"],
-      },
-    ],
-    Pasta: [
-      {
-        name: "Lobster Linguine",
-        price: "$32",
-        priceValue: 32,
-        description:
-          "Hand-made pasta with fresh claw meat in a spicy tomato sauce.",
-        ingredients: "Lobster, Linguine, Chili, Garlic, San Marzano Tomatoes",
-        image:
-          "https://images.unsplash.com/photo-1563379091339-03b21ab4a1f8?auto=format&fit=crop&q=80&w=400",
-        spiceLevel: "Spicy",
-        dietary: [],
-        nutritionalInfo: {
-          calories: "620 kcal",
-          protein: "35g",
-          carbs: "68g",
-          fat: "22g",
-        },
-        allergens: ["Shellfish", "Gluten"],
-      },
-      {
-        name: "Truffle Carbonara",
-        price: "$26",
-        priceValue: 26,
-        description:
-          "Creamy carbonara with black truffle shavings and guanciale.",
-        ingredients:
-          "Eggs, Pecorino Romano, Guanciale, Black Truffle, Spaghetti",
-        image:
-          "https://images.unsplash.com/photo-1551183053-bf91a1d81141?auto=format&fit=crop&q=80&w=400",
-        spiceLevel: "Mild",
-        dietary: [],
-        nutritionalInfo: {
-          calories: "780 kcal",
-          protein: "28g",
-          carbs: "72g",
-          fat: "42g",
-        },
-        allergens: ["Eggs", "Dairy", "Gluten"],
-      },
-    ],
-    Desserts: [
-      {
-        name: "Chocolate Velvet",
-        price: "$14",
-        priceValue: 14,
-        description:
-          "Warm lava cake with vanilla bean gelato and fresh berries.",
-        ingredients: "70% Cocoa, Vanilla Gelato, Mixed Berries, Powdered Sugar",
-        image:
-          "https://images.unsplash.com/photo-1624353365286-3f8d62daad51?auto=format&fit=crop&q=80&w=400",
-        spiceLevel: "Sweet",
-        dietary: ["Vegetarian"],
-        nutritionalInfo: {
-          calories: "520 kcal",
-          protein: "8g",
-          carbs: "68g",
-          fat: "26g",
-        },
-        allergens: ["Dairy", "Eggs"],
-      },
-      {
-        name: "Tiramisu",
-        price: "$12",
-        priceValue: 12,
-        description: "Classic Italian dessert with mascarpone and espresso.",
-        ingredients: "Mascarpone, Espresso, Ladyfingers, Cocoa Powder",
-        image:
-          "https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?auto=format&fit=crop&q=80&w=400",
-        spiceLevel: "Sweet",
-        dietary: ["Vegetarian"],
-        nutritionalInfo: {
-          calories: "480 kcal",
-          protein: "9g",
-          carbs: "52g",
-          fat: "28g",
-        },
-        allergens: ["Dairy", "Eggs", "Gluten"],
-      },
-    ],
-    Drinks: [
-      {
-        name: "Smoked Old Fashioned",
-        price: "$18",
-        priceValue: 18,
-        description: "Premium bourbon with maple smoke and walnut bitters.",
-        ingredients: "Bourbon, Maple Syrup, Walnut Bitters, Orange Peel",
-        image:
-          "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&q=80&w=400",
-        spiceLevel: "None",
-        dietary: ["Vegan"],
-        nutritionalInfo: {
-          calories: "220 kcal",
-          protein: "0g",
-          carbs: "12g",
-          fat: "0g",
-        },
-        allergens: [],
-      },
-      {
-        name: "Espresso Martini",
-        price: "$16",
-        priceValue: 16,
-        description: "Vodka, fresh espresso, and coffee liqueur.",
-        ingredients: "Vodka, Fresh Espresso, Coffee Liqueur, Coffee Beans",
-        image:
-          "https://images.unsplash.com/photo-1514365893784-7309e1278a4f?auto=format&fit=crop&q=80&w=400",
-        spiceLevel: "None",
-        dietary: ["Vegan"],
-        nutritionalInfo: {
-          calories: "180 kcal",
-          protein: "1g",
-          carbs: "15g",
-          fat: "0g",
-        },
-        allergens: [],
-      },
-    ],
-  };
-
-  // Function to find a dish across all categories
-  const findDish = (name) => {
-    for (const category in menuItems) {
-      const dish = menuItems[category].find(
-        (item) =>
-          item.name.toLowerCase() === decodeURIComponent(name).toLowerCase(),
-      );
-      if (dish) {
-        return { ...dish, category };
+  useEffect(() => {
+    const fetchMenu = async () => {
+      try {
+        const data = await getMenuItems();
+        setAllDishes(Array.isArray(data) ? data : []);
+      } catch {
+        setError("Could not load the menu. Ensure the server is running.");
+      } finally {
+        setLoading(false);
       }
-    }
-    return null;
+    };
+    fetchMenu();
+  }, []);
+
+  const findDish = (name) => {
+    return allDishes.find(
+      (item) =>
+        item.name.toLowerCase() === decodeURIComponent(name).toLowerCase(),
+    );
   };
 
   const dish = findDish(dishName);
@@ -330,6 +63,22 @@ const MenuDetails = () => {
     setTimeout(() => setAddedToCart(false), 3000);
   };
 
+  if (loading) {
+    return (
+      <div className="pt-28 pb-32 bg-gray-50 min-h-screen flex items-center justify-center">
+        <p className="text-gray-500">Loading dish...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="pt-28 pb-32 bg-gray-50 min-h-screen flex items-center justify-center">
+        <p className="text-red-600">{error}</p>
+      </div>
+    );
+  }
+
   if (!dish) {
     return (
       <div className="pt-28 pb-32 bg-gray-50 min-h-screen flex items-center justify-center">
@@ -350,6 +99,13 @@ const MenuDetails = () => {
       </div>
     );
   }
+
+  // "You may also like" — other dishes in the same category, excluding this one.
+  const relatedDishes = allDishes
+    .filter(
+      (item) => item.category === dish.category && item.name !== dish.name,
+    )
+    .slice(0, 3);
 
   return (
     <div className="pt-28 pb-32 bg-gray-50 min-h-screen">
@@ -426,7 +182,7 @@ const MenuDetails = () => {
                       🌶️ {dish.spiceLevel}
                     </span>
                   )}
-                  {dish.dietary.map((diet, index) => (
+                  {dish.dietary?.map((diet, index) => (
                     <span
                       key={index}
                       className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-semibold"
@@ -568,7 +324,7 @@ const MenuDetails = () => {
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">Subtotal:</span>
                     <span className="text-2xl font-bold text-primary">
-                      ${(dish.priceValue * quantity).toFixed(2)}
+                      Rs. {(dish.priceValue * quantity).toFixed(2)}
                     </span>
                   </div>
                   <p className="text-sm text-gray-500 mt-2">
@@ -643,24 +399,22 @@ const MenuDetails = () => {
         </div>
 
         {/* You May Also Like Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          viewport={{ once: true }}
-          className="mt-16"
-        >
-          <h2 className="text-3xl font-serif font-bold text-gray-800 mb-8 text-center">
-            You May Also Like
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {menuItems[dish.category]
-              ?.filter((item) => item.name !== dish.name)
-              .slice(0, 3)
-              .map((item, index) => (
+        {relatedDishes.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="mt-16"
+          >
+            <h2 className="text-3xl font-serif font-bold text-gray-800 mb-8 text-center">
+              You May Also Like
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {relatedDishes.map((item, index) => (
                 <Link
-                  key={index}
-                  to={`/menu/${item.name.toLowerCase()}`}
+                  key={item.id ?? index}
+                  to={`/menu/${encodeURIComponent(item.name.toLowerCase())}`}
                   className="group bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
                 >
                   <div className="relative h-48 overflow-hidden">
@@ -680,8 +434,9 @@ const MenuDetails = () => {
                   </div>
                 </Link>
               ))}
-          </div>
-        </motion.div>
+            </div>
+          </motion.div>
+        )}
       </section>
     </div>
   );

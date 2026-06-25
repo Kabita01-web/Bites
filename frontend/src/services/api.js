@@ -25,7 +25,7 @@ export const getProfile = async () => {
   return response.data;
 };
 export const updateProfile = async (userData, userId) => {
-  const response = await instance.put(`/user/editprofile/${userId}`, userData);
+  const response = await instance.put(`/users/editprofile/${userId}`, userData);
   return response.data;
 };
 
@@ -47,6 +47,12 @@ export const deleteUser = async (userId) => {
 export const getSystemStats = async () => {
   const response = await instance.get("/users/stats");
   return response.data;
+};
+
+export const getMenuItems = async () => {
+  const res = await fetch("/menu.json");
+  if (!res.ok) throw new Error("Failed to load menu");
+  return res.json();
 };
 
 export default instance;

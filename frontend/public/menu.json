@@ -1,0 +1,230 @@
+[
+  {
+    "id": 1,
+    "name": "Chicken Momo",
+    "category": "Momo",
+    "price": "Rs. 220",
+    "priceValue": 220,
+    "description": "Steamed dumplings filled with minced chicken, onions, and Himalayan spices, served with tomato achar.",
+    "ingredients": "Chicken, Onion, Garlic, Ginger, Coriander, Flour, Tomato Achar",
+    "image": " https://images.pexels.com/photos/18803174/pexels-photo-18803174.jpeg?auto=format&fit=crop&q=80&w=400",
+    "spiceLevel": "Medium",
+    "dietary": [],
+    "nutritionalInfo": {
+      "calories": "320 kcal",
+      "protein": "18g",
+      "carbs": "34g",
+      "fat": "10g"
+    },
+    "allergens": ["Gluten"]
+  },
+  {
+    "id": 2,
+    "name": "Veg Momo",
+    "category": "Momo",
+    "price": "Rs. 180",
+    "priceValue": 180,
+    "description": "Steamed dumplings stuffed with finely chopped cabbage, carrot, and paneer, served with spicy tomato achar.",
+    "ingredients": "Cabbage, Carrot, Paneer, Onion, Garlic, Flour, Tomato Achar",
+    "image": " https://images.pexels.com/photos/28445589/pexels-photo-28445589.jpeg?auto=format&fit=crop&q=80&w=400",
+    "spiceLevel": "Medium",
+    "dietary": ["Vegetarian"],
+    "nutritionalInfo": {
+      "calories": "280 kcal",
+      "protein": "9g",
+      "carbs": "38g",
+      "fat": "8g"
+    },
+    "allergens": ["Gluten", "Dairy"]
+  },
+  {
+    "id": 3,
+    "name": "Jhol Momo",
+    "category": "Momo",
+    "price": "Rs. 240",
+    "priceValue": 240,
+    "description": "Steamed momos served swimming in a tangy, spicy sesame-tomato broth — a Kathmandu street food favorite.",
+    "ingredients": "Chicken, Sesame Seeds, Tomato, Timur, Garlic, Flour",
+    "image": " https://images.pexels.com/photos/3926123/pexels-photo-3926123.jpeg?auto=format&fit=crop&q=80&w=400",
+    "spiceLevel": "Spicy",
+    "dietary": [],
+    "nutritionalInfo": {
+      "calories": "360 kcal",
+      "protein": "17g",
+      "carbs": "36g",
+      "fat": "14g"
+    },
+    "allergens": ["Gluten", "Sesame"]
+  },
+  {
+    "id": 4,
+    "name": "Margherita Pizza",
+    "category": "Pizza",
+    "price": "Rs. 450",
+    "priceValue": 450,
+    "description": "Classic wood-fired pizza topped with fresh mozzarella, tomato sauce, and basil.",
+    "ingredients": "Pizza Dough, Mozzarella, Tomato Sauce, Fresh Basil, Olive Oil",
+    "image": "https://images.unsplash.com/photo-1604068549290-dea0e4a305ca?auto=format&fit=crop&q=80&w=400",
+    "spiceLevel": "Mild",
+    "dietary": ["Vegetarian"],
+    "nutritionalInfo": {
+      "calories": "680 kcal",
+      "protein": "26g",
+      "carbs": "78g",
+      "fat": "28g"
+    },
+    "allergens": ["Gluten", "Dairy"]
+  },
+  {
+    "id": 5,
+    "name": "Chicken Sekuwa Pizza",
+    "category": "Pizza",
+    "price": "Rs. 590",
+    "priceValue": 590,
+    "description": "A local twist on pizza, topped with smoky chicken sekuwa, onions, and spicy mayo drizzle.",
+    "ingredients": "Pizza Dough, Chicken Sekuwa, Mozzarella, Onion, Capsicum, Spicy Mayo",
+    "image": "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&q=80&w=400",
+    "spiceLevel": "Spicy",
+    "dietary": [],
+    "nutritionalInfo": {
+      "calories": "760 kcal",
+      "protein": "34g",
+      "carbs": "72g",
+      "fat": "34g"
+    },
+    "allergens": ["Gluten", "Dairy", "Eggs"]
+  },
+  {
+    "id": 6,
+    "name": "Chicken Spaghetti",
+    "category": "Pasta",
+    "price": "Rs. 380",
+    "priceValue": 380,
+    "description": "Spaghetti tossed in a rich tomato-basil sauce with grilled chicken strips.",
+    "ingredients": "Spaghetti, Chicken Breast, Tomato, Garlic, Basil, Parmesan",
+    "image": " https://images.pexels.com/photos/19062760/pexels-photo-19062760.jpeg?auto=format&fit=crop&q=80&w=400",
+    "spiceLevel": "Mild",
+    "dietary": [],
+    "nutritionalInfo": {
+      "calories": "590 kcal",
+      "protein": "32g",
+      "carbs": "62g",
+      "fat": "18g"
+    },
+    "allergens": ["Gluten", "Dairy"]
+  },
+  {
+    "id": 7,
+    "name": "Veg Alfredo Pasta",
+    "category": "Pasta",
+    "price": "Rs. 340",
+    "priceValue": 340,
+    "description": "Penne pasta in a creamy white sauce with sautéed seasonal vegetables.",
+    "ingredients": "Penne, Cream, Butter, Broccoli, Carrot, Bell Pepper, Parmesan",
+    "image": " https://images.pexels.com/photos/11220208/pexels-photo-11220208.jpeg?auto=format&fit=crop&q=80&w=400",
+    "spiceLevel": "Mild",
+    "dietary": ["Vegetarian"],
+    "nutritionalInfo": {
+      "calories": "540 kcal",
+      "protein": "14g",
+      "carbs": "58g",
+      "fat": "26g"
+    },
+    "allergens": ["Gluten", "Dairy"]
+  },
+  {
+    "id": 8,
+    "name": "Chicken Sekuwa",
+    "category": "Nepali Main Course",
+    "price": "Rs. 420",
+    "priceValue": 420,
+    "description": "Skewered chicken marinated in traditional Nepali spices, grilled over open fire, served with chiura and chutney.",
+    "ingredients": "Chicken, Timur, Garlic, Ginger, Mustard Oil, Chiura, Chutney",
+    "image": " https://images.pexels.com/photos/9646858/pexels-photo-9646858.jpeg?auto=format&fit=crop&q=80&w=400",
+    "spiceLevel": "Spicy",
+    "dietary": ["Gluten-Free"],
+    "nutritionalInfo": {
+      "calories": "510 kcal",
+      "protein": "44g",
+      "carbs": "16g",
+      "fat": "26g"
+    },
+    "allergens": []
+  },
+  {
+    "id": 9,
+    "name": "Butter Naan",
+    "category": "Indian Bread",
+    "price": "Rs. 80",
+    "priceValue": 80,
+    "description": "Soft and fluffy leavened flatbread baked until golden and brushed with butter.",
+    "ingredients": "Flour, Yogurt, Yeast, Butter, Milk, Salt",
+    "image": "https://images.pexels.com/photos/12737816/pexels-photo-12737816.jpeg",
+    "spiceLevel": "None",
+    "dietary": ["Vegetarian"],
+    "nutritionalInfo": {
+      "calories": "210 kcal",
+      "protein": "6g",
+      "carbs": "34g",
+      "fat": "6g"
+    },
+    "allergens": ["Gluten", "Dairy"]
+  },
+  {
+    "id": 10,
+    "name": "Chicken Thukpa",
+    "category": "Soup",
+    "price": "Rs. 280",
+    "priceValue": 280,
+    "description": "Hearty Himalayan noodle soup with tender chicken pieces and seasonal vegetables in a warm broth.",
+    "ingredients": "Noodles, Chicken, Cabbage, Carrot, Garlic, Spring Onion",
+    "image": "https://images.pexels.com/photos/6249221/pexels-photo-6249221.jpeg?auto=format&fit=crop&q=80&w=400",
+    "spiceLevel": "Medium",
+    "dietary": [],
+    "nutritionalInfo": {
+      "calories": "380 kcal",
+      "protein": "22g",
+      "carbs": "42g",
+      "fat": "10g"
+    },
+    "allergens": ["Gluten"]
+  },
+  {
+    "id": 11,
+    "name": "Chocolate Lava Cake",
+    "category": "Desserts",
+    "price": "Rs. 260",
+    "priceValue": 260,
+    "description": "Warm chocolate cake with a molten center, served with vanilla ice cream.",
+    "ingredients": "Dark Chocolate, Butter, Eggs, Flour, Vanilla Ice Cream",
+    "image": "https://images.pexels.com/photos/2144200/pexels-photo-2144200.jpeg?auto=format&fit=crop&q=80&w=400",
+    "spiceLevel": "Sweet",
+    "dietary": ["Vegetarian"],
+    "nutritionalInfo": {
+      "calories": "480 kcal",
+      "protein": "7g",
+      "carbs": "56g",
+      "fat": "24g"
+    },
+    "allergens": ["Gluten", "Dairy", "Eggs"]
+  },
+  {
+    "id": 12,
+    "name": "Masala Tea",
+    "category": "Drinks",
+    "price": "Rs. 80",
+    "priceValue": 80,
+    "description": "Hot spiced milk tea brewed with cardamom, ginger, and cinnamon — the everyday Nepali classic.",
+    "ingredients": "Milk, Black Tea, Cardamom, Ginger, Cinnamon, Sugar",
+    "image": "https://images.pexels.com/photos/20270270/pexels-photo-20270270.jpeg?auto=format&fit=crop&q=80&w=400",
+    "spiceLevel": "None",
+    "dietary": ["Vegetarian"],
+    "nutritionalInfo": {
+      "calories": "120 kcal",
+      "protein": "3g",
+      "carbs": "18g",
+      "fat": "4g"
+    },
+    "allergens": ["Dairy"]
+  }
+]

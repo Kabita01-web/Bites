@@ -65,11 +65,11 @@ const Navbar = () => {
     );
   }
 
+  // Updated nav links - Gallery removed, added Reservations
   const navLinks = [
     { name: "Home", path: "/" },
     { name: "Menu", path: "/menu" },
     { name: "About", path: "/about" },
-    { name: "Gallery", path: "/gallery" },
     { name: "Contact", path: "/contact" },
   ];
 
@@ -226,7 +226,10 @@ const Navbar = () => {
                           onClick={() => setIsProfileOpen(false)}
                           className="dropdown-item"
                         >
-                          <LayoutDashboard size={15} className="text-gray-400" />
+                          <LayoutDashboard
+                            size={15}
+                            className="text-gray-400"
+                          />
                           Dashboard
                         </Link>
                       )}

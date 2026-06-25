@@ -11,11 +11,7 @@ import {
   Check,
 } from "lucide-react";
 import { AuthContext } from "../../context/AuthContext";
-import {
-  getAllUsers,
-  updateUserRole,
-  deleteUser,
-} from "../../services/api";
+import { getAllUsers, updateUserRole, deleteUser } from "../../services/api";
 
 const roleIcon = (role) => {
   switch (role) {
@@ -47,9 +43,11 @@ const UserManagement = () => {
   const fetchUsers = useCallback(async () => {
     try {
       const data = await getAllUsers();
-      setUsers(data.users || data || []);
+      const list = data?.users || data?.data || data;
+      setUsers(Array.isArray(list) ? list : []);
     } catch {
       setError("Could not load users. Ensure the backend server is running.");
+      setUsers([]); // defensive: never leave users in a bad state
     } finally {
       setLoading(false);
     }
@@ -66,8 +64,8 @@ const UserManagement = () => {
       await updateUserRole(userId, newRole);
       setUsers((prev) =>
         prev.map((u) =>
-          (u._id || u.id) === userId ? { ...u, role: newRole } : u
-        )
+          (u._id || u.id) === userId ? { ...u, role: newRole } : u,
+        ),
       );
     } catch {
       setError("Failed to update user role. Check your permissions.");
@@ -77,7 +75,11 @@ const UserManagement = () => {
   };
 
   const handleDelete = async (userId) => {
-    if (!window.confirm("Are you sure you want to delete this user? This action cannot be undone.")) {
+    if (
+      !window.confirm(
+        "Are you sure you want to delete this user? This action cannot be undone.",
+      )
+    ) {
       return;
     }
     setActionLoading(userId);
@@ -95,7 +97,7 @@ const UserManagement = () => {
   const filteredUsers = users.filter(
     (u) =>
       u.username?.toLowerCase().includes(search.toLowerCase()) ||
-      u.email?.toLowerCase().includes(search.toLowerCase())
+      u.email?.toLowerCase().includes(search.toLowerCase()),
   );
 
   if (loading) {
@@ -161,7 +163,7 @@ const UserManagement = () => {
                 <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                   Joined
                 </th>
-                {(isAdmin) && (
+                {isAdmin && (
                   <th className="text-right px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                     Actions
                   </th>
@@ -174,7 +176,8 @@ const UserManagement = () => {
                   const uid = u._id || u.id;
                   const isSelf = uid === (currentUser?._id || currentUser?.id);
                   const isCurrentUserAdmin = u.role === "admin";
-                  const cannotModify = isSelf || (!isAdmin && isCurrentUserAdmin);
+                  const cannotModify =
+                    isSelf || (!isAdmin && isCurrentUserAdmin);
 
                   return (
                     <tr
@@ -239,11 +242,14 @@ const UserManagement = () => {
                       <td className="px-5 py-3">
                         <p className="text-sm text-gray-500">
                           {u.createdAt
-                            ? new Date(u.createdAt).toLocaleDateString("en-US", {
-                                month: "short",
-                                day: "numeric",
-                                year: "numeric",
-                              })
+                            ? new Date(u.createdAt).toLocaleDateString(
+                                "en-US",
+                                {
+                                  month: "short",
+                                  day: "numeric",
+                                  year: "numeric",
+                                },
+                              )
                             : "—"}
                         </p>
                       </td>
@@ -270,9 +276,7 @@ const UserManagement = () => {
                     colSpan={isAdmin ? 5 : 4}
                     className="px-5 py-12 text-center text-gray-400 text-sm"
                   >
-                    {search
-                      ? "No users match your search."
-                      : "No users found."}
+                    {search ? "No users match your search." : "No users found."}
                   </td>
                 </tr>
               )}

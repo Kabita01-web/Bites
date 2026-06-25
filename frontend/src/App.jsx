@@ -10,7 +10,6 @@ import Footer from "./components/Footer";
 import Home from "./pages/Home";
 import Menu from "./pages/Menu";
 import About from "./pages/About";
-import Gallery from "./pages/Gallery";
 import Contact from "./pages/Contact";
 import Reservation from "./pages/Reservation";
 import MenuDetails from "./pages/MenuDetails";
@@ -62,7 +61,6 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/menu" element={<Menu />} />
             <Route path="/about" element={<About />} />
-            <Route path="/gallery" element={<Gallery />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/reservation" element={<Reservation />} />
             <Route path="/menu/:dishName" element={<MenuDetails />} />
