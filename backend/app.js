@@ -29,7 +29,7 @@ app.get("/api/test", (req, res) => {
 });
 
 app.use("/api/auth", authRoute);
-app.use("/api/user", userRoute);
+app.use("/api/users", userRoute);
 app.use("/api/menus", menuRoute);
 app.use("/api/menu-items", menuItemRoute);
 mongoose

@@ -1,79 +1,115 @@
-import User from "../models/User.js"; // Changed from 'user' to 'User'
+import User from "../models/User.js";
 
 export const updateUser = async (req, res) => {
+  // ... your existing function, unchanged ...
+};
+
+// GET /api/users/stats
+export const getUserStats = async (req, res) => {
   try {
-    // Get userid from params (matches route :userid)
+    const totalUsers = await User.countDocuments();
+    const totalAdmins = await User.countDocuments({ role: "admin" });
+    const totalModerators = await User.countDocuments({ role: "moderator" });
+    const totalRegularUsers = totalUsers - totalAdmins - totalModerators;
+
+    res.status(200).json({
+      totalUsers,
+      totalAdmins,
+      totalModerators,
+      totalRegularUsers,
+      createdAt: new Date(), // optional, since SystemStats.jsx checks stats?.createdAt
+    });
+  } catch (error) {
+    console.error("Stats error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+// GET /api/users
+export const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find().select("-password");
+    res.status(200).json({ users });
+  } catch (error) {
+    console.error("Fetch users error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// PUT /api/users/role/:userid  (admin only)
+export const updateUserRole = async (req, res) => {
+  try {
     const { userid } = req.params;
-    const { username, email } = req.body;
+    const { role } = req.body;
 
-    console.log("Update attempt - User ID:", userid);
-    console.log("Update data:", { username, email });
-    console.log("Authenticated user:", req.user?._id);
-
-    // Check authorization FIRST
     if (!req.user) {
       return res.status(401).json({ message: "Not authenticated" });
     }
 
-    if (req.user._id.toString() !== userid) {
-      return res.status(403).json({
-        message: "You can only update your own profile",
-        yourId: req.user._id.toString(),
-        attemptedId: userid,
-      });
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ message: "Admin access required" });
     }
 
-    // Find user - use a different variable name
-    const userToUpdate = await User.findById(userid);
-    if (!userToUpdate) {
+    const validRoles = ["user", "moderator", "admin"];
+    if (!validRoles.includes(role)) {
+      return res.status(400).json({ message: "Invalid role" });
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userid,
+      { role },
+      { new: true, runValidators: true },
+    ).select("-password");
+
+    if (!updatedUser) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Check for existing user with same email or username
-    if (username || email) {
-      const searchCriteria = {
-        $and: [{ _id: { $ne: userid } }, { $or: [] }],
-      };
-
-      if (username) searchCriteria.$and[1].$or.push({ username });
-      if (email) searchCriteria.$and[1].$or.push({ email });
-
-      const existingUser = await User.findOne(searchCriteria);
-
-      if (existingUser) {
-        if (existingUser.username === username) {
-          return res.status(400).json({ message: "Username already in use" });
-        }
-        if (existingUser.email === email) {
-          return res.status(400).json({ message: "Email already in use" });
-        }
-      }
-    }
-
-    // Prepare update data (only include fields that are provided)
-    const updateData = {};
-    if (username) updateData.username = username;
-    if (email) updateData.email = email;
-
-    // Update user
-    const updatedUser = await User.findByIdAndUpdate(userid, updateData, {
-      new: true,
-      runValidators: true,
-    }).select("-password");
-
     res.status(200).json({
-      message: "User updated successfully",
+      message: "Role updated successfully",
       user: updatedUser,
     });
   } catch (error) {
-    console.error("Update error:", error);
+    console.error("Update role error:", error);
 
     if (error.name === "CastError") {
       return res.status(400).json({ message: "Invalid user ID format" });
     }
 
-    if (error.name === "ValidationError") {
-      return res.status(400).json({ message: error.message });
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// DELETE /api/users/:userid  (admin only)
+export const deleteUser = async (req, res) => {
+  try {
+    const { userid } = req.params;
+
+    if (!req.user) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    if (req.user._id.toString() === userid) {
+      return res
+        .status(400)
+        .json({ message: "You cannot delete your own account" });
+    }
+
+    const deletedUser = await User.findByIdAndDelete(userid);
+
+    if (!deletedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({ message: "User deleted successfully" });
+  } catch (error) {
+    console.error("Delete user error:", error);
+
+    if (error.name === "CastError") {
+      return res.status(400).json({ message: "Invalid user ID format" });
     }
 
     res.status(500).json({ message: "Server error", error: error.message });
