@@ -22,9 +22,9 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import DashboardLayout from "./pages/dashboard/DashboardLayout";
 import AdminDashboard from "./pages/dashboard/AdminDashboard";
 import ModeratorDashboard from "./pages/dashboard/ModeratorDashboard";
-
 import UserManagement from "./pages/dashboard/UserManagement";
 import SystemStats from "./pages/dashboard/SystemStats";
+import MenuItemManagement from "./pages/dashboard/MenuItemmanagement";
 
 // Scroll to top on route change
 const ScrollToTop = () => {
@@ -63,7 +63,7 @@ function App() {
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/reservation" element={<Reservation />} />
-            <Route path="/menu/:dishName" element={<MenuDetails />} />
+            <Route path="/menu/:id" element={<MenuDetails />} />{" "}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/profile" element={<Profile />} />
@@ -90,6 +90,14 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={["admin"]}>
                     <SystemStats />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="menu-items"
+                element={
+                  <ProtectedRoute allowedRoles={["admin", "moderator"]}>
+                    <MenuItemManagement />
                   </ProtectedRoute>
                 }
               />

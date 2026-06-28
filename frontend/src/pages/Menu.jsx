@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import MenuItem from "../components/MenuItem";
-import { getMenuItems } from "../services/api";
+import { getAllMenuItemsAdmin } from "../services/api";
 
 const Menu = () => {
   const [allDishes, setAllDishes] = useState([]);
@@ -15,8 +15,13 @@ const Menu = () => {
   useEffect(() => {
     const fetchMenu = async () => {
       try {
-        const data = await getMenuItems();
-        setAllDishes(Array.isArray(data) ? data : []);
+        const json = await getAllMenuItemsAdmin();
+        const data = json?.data;
+        // Only show items that are currently available to customers
+        const available = Array.isArray(data)
+          ? data.filter((item) => item.isAvailable)
+          : [];
+        setAllDishes(available);
       } catch {
         setError("Could not load the menu. Ensure the server is running.");
       } finally {
@@ -27,7 +32,7 @@ const Menu = () => {
   }, []);
 
   // Build category list dynamically from the data itself,
-  // so adding a new category in menu.json doesn't require a code change.
+  // so adding a new category in the database doesn't require a code change.
   const categories = [
     "All",
     ...Array.from(new Set(allDishes.map((item) => item.category))),
@@ -41,11 +46,12 @@ const Menu = () => {
   let currentItems = getCurrentItems();
 
   if (searchTerm) {
+    const term = searchTerm.toLowerCase();
     currentItems = currentItems.filter(
       (item) =>
-        item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.ingredients.toLowerCase().includes(searchTerm.toLowerCase()),
+        item.name?.toLowerCase().includes(term) ||
+        item.description?.toLowerCase().includes(term) ||
+        item.ingredients?.toLowerCase().includes(term),
     );
   }
 
@@ -191,8 +197,8 @@ const Menu = () => {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {currentItems.map((item, index) => (
                   <Link
-                    key={item.id ?? index}
-                    to={`/menu/${encodeURIComponent(item.name.toLowerCase())}`}
+                    key={item._id ?? index}
+                    to={`/menu/${item._id}`}
                     className="relative block no-underline group"
                   >
                     {/* Category badge (All view only) */}
@@ -200,24 +206,6 @@ const Menu = () => {
                       <div className="absolute top-4 left-4 z-10">
                         <span className="bg-primary/90 backdrop-blur-sm text-white text-xs px-3 py-1 rounded-full font-semibold">
                           {item.category}
-                        </span>
-                      </div>
-                    )}
-                    {/* Spice level badge */}
-                    {item.spiceLevel && item.spiceLevel !== "None" && (
-                      <div className="absolute top-4 right-4 z-10">
-                        <span
-                          className={`text-xs px-2 py-1 rounded-full font-semibold shadow-md ${
-                            item.spiceLevel === "Spicy"
-                              ? "bg-red-500 text-white"
-                              : item.spiceLevel === "Medium"
-                                ? "bg-orange-500 text-white"
-                                : item.spiceLevel === "Sweet"
-                                  ? "bg-pink-500 text-white"
-                                  : "bg-green-500 text-white"
-                          }`}
-                        >
-                          {item.spiceLevel}
                         </span>
                       </div>
                     )}

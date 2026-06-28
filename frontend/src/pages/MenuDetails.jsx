@@ -2,13 +2,17 @@ import React, { useState, useEffect } from "react";
 // eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { getMenuItems } from "../services/api";
+import { getMenuItemByIdAdmin, getAllMenuItemsAdmin } from "../services/api";
+
+const FALLBACK_IMAGE =
+  "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=1200";
 
 const MenuDetails = () => {
-  const { dishName } = useParams();
+  const { id } = useParams();
   const navigate = useNavigate();
 
-  const [allDishes, setAllDishes] = useState([]);
+  const [dish, setDish] = useState(null);
+  const [relatedDishes, setRelatedDishes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -17,40 +21,36 @@ const MenuDetails = () => {
   const [addedToCart, setAddedToCart] = useState(false);
 
   useEffect(() => {
-    const fetchMenu = async () => {
+    const fetchDish = async () => {
+      setLoading(true);
+      setError("");
       try {
-        const data = await getMenuItems();
-        setAllDishes(Array.isArray(data) ? data : []);
+        const json = await getMenuItemByIdAdmin(id);
+        if (!json.success || !json.data) {
+          throw new Error("not found");
+        }
+        setDish(json.data);
+
+        // Fetch related dishes in the same category
+        const allJson = await getAllMenuItemsAdmin();
+        const all = Array.isArray(allJson?.data) ? allJson.data : [];
+        const related = all
+          .filter(
+            (item) =>
+              item.category === json.data.category &&
+              item._id !== json.data._id &&
+              item.isAvailable,
+          )
+          .slice(0, 3);
+        setRelatedDishes(related);
       } catch {
-        setError("Could not load the menu. Ensure the server is running.");
+        setError("Could not load this dish. It may no longer be available.");
       } finally {
         setLoading(false);
       }
     };
-    fetchMenu();
-  }, []);
-
-  const findDish = (name) => {
-    return allDishes.find(
-      (item) =>
-        item.name.toLowerCase() === decodeURIComponent(name).toLowerCase(),
-    );
-  };
-
-  const dish = findDish(dishName);
-
-  const getSpiceColor = (spiceLevel) => {
-    switch (spiceLevel) {
-      case "Spicy":
-        return "bg-red-500";
-      case "Medium":
-        return "bg-orange-500";
-      case "Sweet":
-        return "bg-pink-500";
-      default:
-        return "bg-green-500";
-    }
-  };
+    fetchDish();
+  }, [id]);
 
   const handleAddToCart = () => {
     // Implement your cart logic here
@@ -71,15 +71,7 @@ const MenuDetails = () => {
     );
   }
 
-  if (error) {
-    return (
-      <div className="pt-28 pb-32 bg-gray-50 min-h-screen flex items-center justify-center">
-        <p className="text-red-600">{error}</p>
-      </div>
-    );
-  }
-
-  if (!dish) {
+  if (error || !dish) {
     return (
       <div className="pt-28 pb-32 bg-gray-50 min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -87,7 +79,7 @@ const MenuDetails = () => {
             Dish Not Found
           </h1>
           <p className="text-gray-600 mb-8">
-            Sorry, we couldn't find the dish you're looking for.
+            {error || "Sorry, we couldn't find the dish you're looking for."}
           </p>
           <Link
             to="/menu"
@@ -100,19 +92,12 @@ const MenuDetails = () => {
     );
   }
 
-  // "You may also like" — other dishes in the same category, excluding this one.
-  const relatedDishes = allDishes
-    .filter(
-      (item) => item.category === dish.category && item.name !== dish.name,
-    )
-    .slice(0, 3);
-
   return (
     <div className="pt-28 pb-32 bg-gray-50 min-h-screen">
       {/* Hero Section */}
       <section className="relative h-[50vh] md:h-[60vh] overflow-hidden">
         <img
-          src={dish.image}
+          src={dish.imageUrl || FALLBACK_IMAGE}
           alt={dish.name}
           className="absolute inset-0 w-full h-full object-cover"
         />
@@ -170,24 +155,17 @@ const MenuDetails = () => {
               <div className="flex items-center justify-between flex-wrap gap-4 mb-8 pb-6 border-b border-gray-200">
                 <div>
                   <span className="text-5xl font-serif font-bold text-primary">
-                    {dish.price}
+                    Rs. {dish.price}
                   </span>
                   <span className="text-gray-500 ml-2">per serving</span>
                 </div>
                 <div className="flex gap-3">
-                  {dish.spiceLevel && dish.spiceLevel !== "None" && (
-                    <span
-                      className={`${getSpiceColor(dish.spiceLevel)} text-white px-3 py-1 rounded-full text-sm font-semibold`}
-                    >
-                      🌶️ {dish.spiceLevel}
-                    </span>
-                  )}
-                  {dish.dietary?.map((diet, index) => (
+                  {dish.tags?.map((tag, index) => (
                     <span
                       key={index}
                       className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-semibold"
                     >
-                      {diet}
+                      {tag}
                     </span>
                   ))}
                 </div>
@@ -204,71 +182,13 @@ const MenuDetails = () => {
               </div>
 
               {/* Ingredients */}
-              <div className="mb-8">
-                <h2 className="text-2xl font-serif font-bold text-gray-800 mb-4">
-                  Ingredients
-                </h2>
-                <p className="text-gray-600 leading-relaxed">
-                  {dish.ingredients}
-                </p>
-              </div>
-
-              {/* Nutritional Information */}
-              {dish.nutritionalInfo && (
+              {dish.ingredients && (
                 <div className="mb-8">
                   <h2 className="text-2xl font-serif font-bold text-gray-800 mb-4">
-                    Nutritional Information
+                    Ingredients
                   </h2>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="bg-gray-50 p-4 rounded-xl text-center">
-                      <div className="text-2xl font-bold text-primary">
-                        {dish.nutritionalInfo.calories}
-                      </div>
-                      <div className="text-sm text-gray-600">Calories</div>
-                    </div>
-                    <div className="bg-gray-50 p-4 rounded-xl text-center">
-                      <div className="text-2xl font-bold text-primary">
-                        {dish.nutritionalInfo.protein}
-                      </div>
-                      <div className="text-sm text-gray-600">Protein</div>
-                    </div>
-                    <div className="bg-gray-50 p-4 rounded-xl text-center">
-                      <div className="text-2xl font-bold text-primary">
-                        {dish.nutritionalInfo.carbs}
-                      </div>
-                      <div className="text-sm text-gray-600">Carbs</div>
-                    </div>
-                    <div className="bg-gray-50 p-4 rounded-xl text-center">
-                      <div className="text-2xl font-bold text-primary">
-                        {dish.nutritionalInfo.fat}
-                      </div>
-                      <div className="text-sm text-gray-600">Fat</div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Allergens */}
-              {dish.allergens && dish.allergens.length > 0 && (
-                <div className="mb-8 p-4 bg-yellow-50 rounded-xl border border-yellow-200">
-                  <h3 className="font-semibold text-yellow-800 mb-2 flex items-center gap-2">
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                      />
-                    </svg>
-                    Allergen Information
-                  </h3>
-                  <p className="text-yellow-700">
-                    Contains: {dish.allergens.join(", ")}
+                  <p className="text-gray-600 leading-relaxed">
+                    {dish.ingredients}
                   </p>
                 </div>
               )}
@@ -324,7 +244,7 @@ const MenuDetails = () => {
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">Subtotal:</span>
                     <span className="text-2xl font-bold text-primary">
-                      Rs. {(dish.priceValue * quantity).toFixed(2)}
+                      Rs. {(dish.price * quantity).toFixed(2)}
                     </span>
                   </div>
                   <p className="text-sm text-gray-500 mt-2">
@@ -411,15 +331,15 @@ const MenuDetails = () => {
               You May Also Like
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {relatedDishes.map((item, index) => (
+              {relatedDishes.map((item) => (
                 <Link
-                  key={item.id ?? index}
-                  to={`/menu/${encodeURIComponent(item.name.toLowerCase())}`}
+                  key={item._id}
+                  to={`/menu/${item._id}`}
                   className="group bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
                 >
                   <div className="relative h-48 overflow-hidden">
                     <img
-                      src={item.image}
+                      src={item.imageUrl || FALLBACK_IMAGE}
                       alt={item.name}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                     />
@@ -429,7 +349,7 @@ const MenuDetails = () => {
                       {item.name}
                     </h3>
                     <p className="text-primary font-bold text-lg">
-                      {item.price}
+                      Rs. {item.price}
                     </p>
                   </div>
                 </Link>

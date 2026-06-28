@@ -55,4 +55,35 @@ export const getMenuItems = async () => {
   return res.json();
 };
 
+// ── Menu item management (live MongoDB data, for admin/moderator dashboard) ──
+export const getAllMenusAdmin = async () => {
+  const response = await instance.get("/menus");
+  return response.data;
+};
+
+export const getAllMenuItemsAdmin = async () => {
+  const response = await instance.get("/menu-items");
+  return response.data;
+};
+
+export const createMenuItemAdmin = async (itemData) => {
+  const response = await instance.post("/menu-items", itemData);
+  return response.data;
+};
+
+export const updateMenuItemAdmin = async (itemId, itemData) => {
+  const response = await instance.put(`/menu-items/${itemId}`, itemData);
+  return response.data;
+};
+
+export const deleteMenuItemAdmin = async (itemId) => {
+  const response = await instance.delete(`/menu-items/${itemId}`);
+  return response.data;
+};
+
+export const getMenuItemByIdAdmin = async (itemId) => {
+  const response = await instance.get(`/menu-items/${itemId}`);
+  return response.data;
+};
+
 export default instance;
