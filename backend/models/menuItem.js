@@ -15,6 +15,7 @@ const menuItemSchema = new Schema(
     isAvailable: { type: Boolean, default: true },
     preparationTime: { type: Number }, // in minutes
     tags: [String], // ["vegan", "spicy", "gluten-free"]
+    ingredients: { type: String, trim: true },
     menu: {
       type: Schema.Types.ObjectId,
       ref: "Menu",
