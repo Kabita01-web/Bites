@@ -1,4 +1,4 @@
-import { useState, useContext, useEffect } from "react";
+import { useState, useContext } from "react";
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -27,13 +27,18 @@ const navItems = [
     roles: ["admin", "moderator"],
   },
   {
+    label: "Menu Items",
+    path: "/dashboard/menu-items",
+    icon: UtensilsCrossed,
+    roles: ["admin", "moderator"],
+  },
+  {
     label: "System Stats",
     path: "/dashboard/stats",
     icon: BarChart3,
     roles: ["admin"],
   },
 ];
-
 const DashboardLayout = () => {
   const { user, logout } = useContext(AuthContext);
   const location = useLocation();
@@ -41,17 +46,13 @@ const DashboardLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
 
-  useEffect(() => {
-    setSidebarOpen(false);
-  }, [location.pathname]);
-
   const handleLogout = async () => {
     await logout();
     navigate("/");
   };
 
   const filteredNav = navItems.filter((item) =>
-    item.roles.includes(user?.role)
+    item.roles.includes(user?.role),
   );
 
   const isActive = (path) => {
@@ -88,6 +89,7 @@ const DashboardLayout = () => {
             <Link
               key={item.path}
               to={item.path}
+              onClick={() => setSidebarOpen(false)}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
                 isActive(item.path)
                   ? "bg-primary/10 text-primary shadow-sm"
