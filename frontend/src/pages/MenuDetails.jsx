@@ -15,37 +15,132 @@ const MenuDetails = () => {
   const [relatedDishes, setRelatedDishes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [dataSource, setDataSource] = useState("");
 
   const [quantity, setQuantity] = useState(1);
   const [specialInstructions, setSpecialInstructions] = useState("");
   const [addedToCart, setAddedToCart] = useState(false);
 
+  // Helper function to get image URL
+  const getImageUrl = (item) => {
+    return (item.image || item.imageUrl || FALLBACK_IMAGE).trim();
+  };
+
+  // Helper function to get price as number
+  const getPriceNumber = (price) => {
+    if (typeof price === "number") return price;
+    if (typeof price === "string") {
+      const cleanPrice = price.replace(/[^0-9.]/g, "");
+      return parseFloat(cleanPrice) || 0;
+    }
+    return 0;
+  };
+
+  // Helper function to format price
+  const formatPrice = (price) => {
+    if (typeof price === "number") return `Rs. ${price}`;
+    if (typeof price === "string" && price.includes("Rs.")) return price;
+    return `Rs. ${price}`;
+  };
+
   useEffect(() => {
     const fetchDish = async () => {
       setLoading(true);
       setError("");
-      try {
-        const json = await getMenuItemByIdAdmin(id);
-        if (!json.success || !json.data) {
-          throw new Error("not found");
-        }
-        setDish(json.data);
 
-        // Fetch related dishes in the same category
-        const allJson = await getAllMenuItemsAdmin();
-        const all = Array.isArray(allJson?.data) ? allJson.data : [];
-        const related = all
-          .filter(
-            (item) =>
-              item.category === json.data.category &&
-              item._id !== json.data._id &&
-              item.isAvailable,
-          )
-          .slice(0, 3);
-        setRelatedDishes(related);
-      } catch {
-        setError("Could not load this dish. It may no longer be available.");
-      } finally {
+      try {
+        // Try to fetch from backend first
+        try {
+          const json = await getMenuItemByIdAdmin(id);
+          if (json.success && json.data) {
+            const dishData = json.data;
+            setDish(dishData);
+            setDataSource("backend");
+
+            // Fetch related dishes from backend
+            const allJson = await getAllMenuItemsAdmin();
+            const all = Array.isArray(allJson?.data) ? allJson.data : [];
+            const related = all
+              .filter(
+                (item) =>
+                  item.category === dishData.category &&
+                  item._id !== dishData._id &&
+                  item.isAvailable !== false,
+              )
+              .slice(0, 3);
+            setRelatedDishes(related);
+            setLoading(false);
+            return;
+          }
+        } catch (backendErr) {
+          console.log(
+            "Backend not available, trying local JSON:",
+            backendErr.message,
+          );
+        }
+
+        // Fallback to local JSON
+        try {
+          const response = await fetch("/menu.json");
+          if (response.ok) {
+            const data = await response.json();
+            if (Array.isArray(data)) {
+              // Try to find by id (number) or _id (string)
+              const foundItem = data.find(
+                (item) =>
+                  String(item.id) === String(id) ||
+                  item._id === id ||
+                  String(item._id) === String(id),
+              );
+
+              if (foundItem) {
+                // Transform to match expected structure
+                const transformedItem = {
+                  ...foundItem,
+                  _id: foundItem.id || foundItem._id,
+                  imageUrl: foundItem.image || foundItem.imageUrl,
+                  tags: foundItem.dietary || [], // Use dietary as tags
+                  isAvailable: true,
+                  // Keep original fields
+                  dietary: foundItem.dietary || [],
+                  spiceLevel: foundItem.spiceLevel || "",
+                  nutritionalInfo: foundItem.nutritionalInfo || null,
+                  allergens: foundItem.allergens || [],
+                  priceValue:
+                    foundItem.priceValue || getPriceNumber(foundItem.price),
+                };
+                setDish(transformedItem);
+                setDataSource("local");
+
+                // Get related dishes from local
+                const related = data
+                  .filter(
+                    (item) =>
+                      item.category === foundItem.category &&
+                      String(item.id) !== String(foundItem.id),
+                  )
+                  .slice(0, 3)
+                  .map((item) => ({
+                    ...item,
+                    _id: item.id || item._id,
+                    imageUrl: item.image || item.imageUrl,
+                  }));
+                setRelatedDishes(related);
+                setLoading(false);
+                return;
+              }
+            }
+          }
+        } catch (localErr) {
+          console.log("Local JSON not available:", localErr.message);
+        }
+
+        throw new Error("Dish not found in any source");
+      } catch (err) {
+        setError(
+          err.message ||
+            "Could not load this dish. It may no longer be available.",
+        );
         setLoading(false);
       }
     };
@@ -53,11 +148,12 @@ const MenuDetails = () => {
   }, [id]);
 
   const handleAddToCart = () => {
-    // Implement your cart logic here
+    const priceNumber = dish.priceValue || getPriceNumber(dish.price);
     console.log("Added to cart:", {
       ...dish,
       quantity,
       specialInstructions,
+      total: priceNumber * quantity,
     });
     setAddedToCart(true);
     setTimeout(() => setAddedToCart(false), 3000);
@@ -66,7 +162,10 @@ const MenuDetails = () => {
   if (loading) {
     return (
       <div className="pt-28 pb-32 bg-gray-50 min-h-screen flex items-center justify-center">
-        <p className="text-gray-500">Loading dish...</p>
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div>
+          <p className="text-gray-500 mt-4">Loading dish...</p>
+        </div>
       </div>
     );
   }
@@ -92,14 +191,22 @@ const MenuDetails = () => {
     );
   }
 
+  const imageSrc = getImageUrl(dish);
+  const priceNumber = dish.priceValue || getPriceNumber(dish.price);
+  const displayPrice = formatPrice(dish.price);
+
   return (
     <div className="pt-28 pb-32 bg-gray-50 min-h-screen">
       {/* Hero Section */}
       <section className="relative h-[50vh] md:h-[60vh] overflow-hidden">
         <img
-          src={dish.imageUrl || FALLBACK_IMAGE}
+          src={imageSrc}
           alt={dish.name}
           className="absolute inset-0 w-full h-full object-cover"
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = FALLBACK_IMAGE;
+          }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-black/30"></div>
 
@@ -110,9 +217,22 @@ const MenuDetails = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
-              <span className="inline-block bg-primary/90 backdrop-blur-sm text-white text-sm px-4 py-1 rounded-full mb-4">
-                {dish.category}
-              </span>
+              <div className="flex flex-wrap items-center gap-2 mb-4">
+                <span className="inline-block bg-primary/90 backdrop-blur-sm text-white text-sm px-4 py-1 rounded-full">
+                  {dish.category}
+                </span>
+                {dataSource && (
+                  <span
+                    className={`inline-block text-white text-xs px-3 py-1 rounded-full backdrop-blur-sm ${
+                      dataSource === "backend"
+                        ? "bg-green-500/70"
+                        : "bg-blue-500/70"
+                    }`}
+                  >
+                    {dataSource === "backend" ? "🌐 Live" : "📋 Local"}
+                  </span>
+                )}
+              </div>
               <h1 className="text-4xl md:text-6xl lg:text-7xl font-serif font-bold text-white mb-4">
                 {dish.name}
               </h1>
@@ -155,15 +275,43 @@ const MenuDetails = () => {
               <div className="flex items-center justify-between flex-wrap gap-4 mb-8 pb-6 border-b border-gray-200">
                 <div>
                   <span className="text-5xl font-serif font-bold text-primary">
-                    Rs. {dish.price}
+                    {displayPrice}
                   </span>
                   <span className="text-gray-500 ml-2">per serving</span>
                 </div>
-                <div className="flex gap-3">
-                  {dish.tags?.map((tag, index) => (
+                <div className="flex flex-wrap gap-2">
+                  {/* Spice Level */}
+                  {dish.spiceLevel && dish.spiceLevel !== "None" && (
+                    <span
+                      className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                        dish.spiceLevel === "Mild"
+                          ? "bg-green-100 text-green-700"
+                          : dish.spiceLevel === "Medium"
+                            ? "bg-yellow-100 text-yellow-700"
+                            : dish.spiceLevel === "Spicy"
+                              ? "bg-red-100 text-red-700"
+                              : "bg-gray-100 text-gray-700"
+                      }`}
+                    >
+                      {dish.spiceLevel}
+                    </span>
+                  )}
+
+                  {/* Dietary Tags */}
+                  {dish.dietary?.map((tag, index) => (
                     <span
                       key={index}
                       className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-semibold"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+
+                  {/* Tags (backward compatibility) */}
+                  {dish.tags?.map((tag, index) => (
+                    <span
+                      key={`tag-${index}`}
+                      className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-semibold"
                     >
                       {tag}
                     </span>
@@ -190,6 +338,49 @@ const MenuDetails = () => {
                   <p className="text-gray-600 leading-relaxed">
                     {dish.ingredients}
                   </p>
+                </div>
+              )}
+
+              {/* Nutritional Info */}
+              {dish.nutritionalInfo && (
+                <div className="mb-8">
+                  <h2 className="text-2xl font-serif font-bold text-gray-800 mb-4">
+                    Nutritional Information
+                  </h2>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {Object.entries(dish.nutritionalInfo).map(
+                      ([key, value]) => (
+                        <div
+                          key={key}
+                          className="bg-gray-50 rounded-xl p-4 text-center"
+                        >
+                          <p className="text-sm text-gray-500">{key}</p>
+                          <p className="text-xl font-bold text-gray-800">
+                            {value}
+                          </p>
+                        </div>
+                      ),
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Allergens */}
+              {dish.allergens && dish.allergens.length > 0 && (
+                <div className="mb-8">
+                  <h2 className="text-2xl font-serif font-bold text-gray-800 mb-4">
+                    Allergens
+                  </h2>
+                  <div className="flex flex-wrap gap-2">
+                    {dish.allergens.map((allergen, index) => (
+                      <span
+                        key={index}
+                        className="bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm"
+                      >
+                        {allergen}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
@@ -244,7 +435,7 @@ const MenuDetails = () => {
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">Subtotal:</span>
                     <span className="text-2xl font-bold text-primary">
-                      Rs. {(dish.price * quantity).toFixed(2)}
+                      {formatPrice(priceNumber * quantity)}
                     </span>
                   </div>
                   <p className="text-sm text-gray-500 mt-2">
@@ -333,15 +524,19 @@ const MenuDetails = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {relatedDishes.map((item) => (
                 <Link
-                  key={item._id}
-                  to={`/menu/${item._id}`}
+                  key={item._id || item.id}
+                  to={`/menu/${item._id || item.id}`}
                   className="group bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
                 >
                   <div className="relative h-48 overflow-hidden">
                     <img
-                      src={item.imageUrl || FALLBACK_IMAGE}
+                      src={getImageUrl(item)}
                       alt={item.name}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = FALLBACK_IMAGE;
+                      }}
                     />
                   </div>
                   <div className="p-5">
@@ -349,7 +544,7 @@ const MenuDetails = () => {
                       {item.name}
                     </h3>
                     <p className="text-primary font-bold text-lg">
-                      Rs. {item.price}
+                      {formatPrice(item.price)}
                     </p>
                   </div>
                 </Link>
