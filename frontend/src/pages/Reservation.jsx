@@ -2,19 +2,41 @@ import React, { useState, useContext } from "react";
 import { Calendar, Users, Clock, Utensils, CheckCircle2 } from "lucide-react";
 import { AuthContext } from "../context/AuthContext";
 import { Navigate, Link } from "react-router-dom";
+import { createReservation } from "../services/api"; // adjust path to match this file's actual location/name
 
 const Reservation = () => {
   const [submitted, setSubmitted] = useState(false);
-  const { user } = useContext(AuthContext); // ✅ Get user from context
+  const { user } = useContext(AuthContext);
 
-  // ✅ If not logged in, redirect to login
+  const [formData, setFormData] = useState({
+    date: "",
+    time: "18:00",
+    guests: 2,
+    occasion: "none",
+    specialRequests: "",
+  });
+
   if (!user) {
     return <Navigate to="/login" state={{ from: "/reservation" }} replace />;
   }
 
-  const handleSubmit = (e) => {
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]:
+        name === "guests" ? (value === "large" ? value : Number(value)) : value,
+    });
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitted(true);
+    try {
+      await createReservation(formData);
+      setSubmitted(true);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   if (submitted) {
@@ -109,6 +131,9 @@ const Reservation = () => {
                   </label>
                   <input
                     type="date"
+                    name="date"
+                    value={formData.date}
+                    onChange={handleChange}
                     required
                     className="w-full px-8 py-4 bg-secondary/50 rounded-2xl border-transparent focus:border-primary focus:bg-white transition-all duration-300 outline-none font-medium"
                   />
@@ -120,6 +145,9 @@ const Reservation = () => {
                     <Users size={18} /> Number of Guests
                   </label>
                   <select
+                    name="guests"
+                    value={formData.guests}
+                    onChange={handleChange}
                     required
                     className="w-full px-8 py-4 bg-secondary/50 rounded-2xl border-transparent focus:border-primary focus:bg-white transition-all duration-300 outline-none font-medium appearance-none"
                   >
@@ -138,6 +166,9 @@ const Reservation = () => {
                     <Clock size={18} /> Preferred Time
                   </label>
                   <select
+                    name="time"
+                    value={formData.time}
+                    onChange={handleChange}
                     required
                     className="w-full px-8 py-4 bg-secondary/50 rounded-2xl border-transparent focus:border-primary focus:bg-white transition-all duration-300 outline-none font-medium appearance-none"
                   >
@@ -154,7 +185,12 @@ const Reservation = () => {
                   <label className="flex items-center gap-2 text-sm font-bold text-primary uppercase ml-2">
                     <Utensils size={18} /> Occasion
                   </label>
-                  <select className="w-full px-8 py-4 bg-secondary/50 rounded-2xl border-transparent focus:border-primary focus:bg-white transition-all duration-300 outline-none font-medium appearance-none">
+                  <select
+                    name="occasion"
+                    value={formData.occasion}
+                    onChange={handleChange}
+                    className="w-full px-8 py-4 bg-secondary/50 rounded-2xl border-transparent focus:border-primary focus:bg-white transition-all duration-300 outline-none font-medium appearance-none"
+                  >
                     <option value="none">
                       Optional: Birthday, Anniversary...
                     </option>
@@ -172,6 +208,9 @@ const Reservation = () => {
                   Special Requests
                 </label>
                 <textarea
+                  name="specialRequests"
+                  value={formData.specialRequests}
+                  onChange={handleChange}
                   rows="4"
                   placeholder="Tell us about any dietary requirements or table preferences..."
                   className="w-full px-8 py-4 bg-secondary/50 rounded-2xl border-transparent focus:border-primary focus:bg-white transition-all duration-300 outline-none resize-none font-medium"

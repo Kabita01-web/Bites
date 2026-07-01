@@ -86,4 +86,27 @@ export const getMenuItemByIdAdmin = async (itemId) => {
   return response.data;
 };
 
+// ── Reservations ──
+export const createReservation = async (reservationData) => {
+  const response = await instance.post("/reservations", reservationData);
+  return response.data;
+};
+
+export const getMyReservations = async () => {
+  const response = await instance.get("/reservations/my");
+  return response.data;
+};
+
+export const getAllReservationsAdmin = async () => {
+  const response = await instance.get("/reservations");
+  return response.data;
+};
+
+export const updateReservationStatusAdmin = async (reservationId, status) => {
+  const response = await instance.put(`/reservations/${reservationId}/status`, {
+    status,
+  });
+  return response.data;
+};
+
 export default instance;
