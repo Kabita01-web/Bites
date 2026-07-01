@@ -7,6 +7,7 @@ import authRoute from "./routes/authRoute.js";
 import userRoute from "./routes/userRoute.js";
 import menuRoute from "./routes/menuRoute.js";
 import menuItemRoute from "./routes/menuItemRoute.js";
+import reservationRoutes from "./routes/reservationRoutes.js";
 
 dotenv.config();
 
@@ -32,6 +33,8 @@ app.use("/api/auth", authRoute);
 app.use("/api/users", userRoute);
 app.use("/api/menus", menuRoute);
 app.use("/api/menu-items", menuItemRoute);
+app.use("/api/reservations", reservationRoutes);
+
 mongoose
   .connect(process.env.MONGODB_URI)
   .then(() => {
