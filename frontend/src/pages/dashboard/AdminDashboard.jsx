@@ -1,56 +1,47 @@
-import { useState, useEffect, useContext } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Calendar, Users, Clock, Loader2 } from "lucide-react";
 import {
-  Users,
-  Shield,
-  UserCog,
-  TrendingUp,
-  ArrowRight,
-  Loader2,
-} from "lucide-react";
-import { AuthContext } from "../../context/AuthContext";
-import { getAllUsers, getSystemStats } from "../../services/api";
+  getAllReservationsAdmin,
+  updateReservationStatusAdmin,
+} from "../../services/api"; // matches this file's import path, not the "../../api/api" I guessed earlier
 
-const StatCard = ({ icon: Icon, label, value, color }) => (
-  <div className="bg-white rounded-xl border border-gray-200 p-5 flex items-center gap-4">
-    <div className={`p-3 rounded-lg ${color}`}>
-      <Icon size={22} className="text-white" />
-    </div>
-    <div>
-      <p className="text-xs text-gray-500 uppercase tracking-wider font-medium">
-        {label}
-      </p>
-      <p className="text-2xl font-bold text-gray-900 mt-0.5">{value}</p>
-    </div>
-  </div>
-);
+const statusStyles = {
+  pending: "bg-amber-100 text-amber-700",
+  confirmed: "bg-green-100 text-green-700",
+  cancelled: "bg-red-100 text-red-700",
+};
 
-const AdminDashboard = () => {
-  const { user } = useContext(AuthContext);
-  const [stats, setStats] = useState(null);
-  const [recentUsers, setRecentUsers] = useState([]);
+const AdminReservations = () => {
+  const [reservations, setReservations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchReservations = async () => {
       try {
-        const [usersData, statsData] = await Promise.all([
-          getAllUsers(),
-          getSystemStats(),
-        ]);
-        setRecentUsers(
-          (usersData.users || usersData || []).slice(0, 5)
-        );
-        setStats(statsData);
+        const data = await getAllReservationsAdmin();
+        setReservations(data);
       } catch {
-        setError("Could not load dashboard data. Ensure the backend server is running.");
+        setError(
+          "Could not load reservations. Ensure the backend server is running.",
+        );
       } finally {
         setLoading(false);
       }
     };
-    fetchData();
+    fetchReservations();
   }, []);
+
+  const handleStatusChange = async (id, newStatus) => {
+    try {
+      await updateReservationStatusAdmin(id, newStatus);
+      setReservations((prev) =>
+        prev.map((r) => (r._id === id ? { ...r, status: newStatus } : r)),
+      );
+    } catch {
+      setError("Failed to update reservation status.");
+    }
+  };
 
   if (loading) {
     return (
@@ -64,10 +55,10 @@ const AdminDashboard = () => {
     <div className="max-w-6xl mx-auto space-y-6">
       <div>
         <h2 className="text-2xl font-serif font-bold text-gray-900">
-          Welcome back, {user?.username}
+          Reservations
         </h2>
         <p className="text-gray-500 mt-1">
-          Here&apos;s an overview of your platform.
+          Manage upcoming and past table bookings.
         </p>
       </div>
 
@@ -77,76 +68,60 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          icon={Users}
-          label="Total Users"
-          value={stats?.totalUsers ?? recentUsers.length}
-          color="bg-blue-600"
-        />
-        <StatCard
-          icon={Shield}
-          label="Admins"
-          value={stats?.totalAdmins ?? "—"}
-          color="bg-purple-600"
-        />
-        <StatCard
-          icon={UserCog}
-          label="Moderators"
-          value={stats?.totalModerators ?? "—"}
-          color="bg-amber-600"
-        />
-        <StatCard
-          icon={TrendingUp}
-          label="Active"
-          value={stats?.totalUsers ?? recentUsers.length}
-          color="bg-green-600"
-        />
-      </div>
-
       <div className="bg-white rounded-xl border border-gray-200">
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-          <h3 className="font-semibold text-gray-900">Recent Users</h3>
-          <Link
-            to="/dashboard/users"
-            className="text-sm text-primary hover:text-accent font-medium flex items-center gap-1"
-          >
-            View All <ArrowRight size={14} />
-          </Link>
+          <h3 className="font-semibold text-gray-900">All Reservations</h3>
         </div>
-        {recentUsers.length > 0 ? (
+
+        {reservations.length > 0 ? (
           <div className="divide-y divide-gray-50">
-            {recentUsers.map((u) => (
+            {reservations.map((r) => (
               <div
-                key={u._id || u.id}
-                className="flex items-center gap-3 px-5 py-3"
+                key={r._id}
+                className="flex items-center gap-3 px-5 py-3 flex-wrap"
               >
                 <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-sm font-semibold text-gray-600">
-                  {u.username?.[0]?.toUpperCase()}
+                  {r.user?.username?.[0]?.toUpperCase()}
                 </div>
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-[160px]">
                   <p className="text-sm font-medium text-gray-900 truncate">
-                    {u.username}
+                    {r.user?.username}
                   </p>
-                  <p className="text-xs text-gray-400 truncate">{u.email}</p>
+                  <p className="text-xs text-gray-400 truncate">
+                    {r.user?.email}
+                  </p>
                 </div>
-                <span
-                  className={`text-[11px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full ${
-                    u.role === "admin"
-                      ? "bg-purple-100 text-purple-700"
-                      : u.role === "moderator"
-                        ? "bg-amber-100 text-amber-700"
-                        : "bg-gray-100 text-gray-600"
+
+                <div className="flex items-center gap-1 text-xs text-gray-500">
+                  <Calendar size={14} />
+                  {new Date(r.date).toLocaleDateString()}
+                </div>
+                <div className="flex items-center gap-1 text-xs text-gray-500">
+                  <Clock size={14} />
+                  {r.time}
+                </div>
+                <div className="flex items-center gap-1 text-xs text-gray-500">
+                  <Users size={14} />
+                  {r.guests}
+                </div>
+
+                <select
+                  value={r.status}
+                  onChange={(e) => handleStatusChange(r._id, e.target.value)}
+                  className={`text-[11px] uppercase tracking-wider font-semibold px-2 py-1 rounded-full border-0 ${
+                    statusStyles[r.status] || "bg-gray-100 text-gray-600"
                   }`}
                 >
-                  {u.role || "user"}
-                </span>
+                  <option value="pending">Pending</option>
+                  <option value="confirmed">Confirmed</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
               </div>
             ))}
           </div>
         ) : (
           <div className="px-5 py-8 text-center text-gray-400 text-sm">
-            {error ? "Unable to load users" : "No users found"}
+            {error ? "Unable to load reservations" : "No reservations found"}
           </div>
         )}
       </div>
@@ -154,4 +129,4 @@ const AdminDashboard = () => {
   );
 };
 
-export default AdminDashboard;
+export default AdminReservations;

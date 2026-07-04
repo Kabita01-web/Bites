@@ -25,6 +25,7 @@ import ModeratorDashboard from "./pages/dashboard/ModeratorDashboard";
 import UserManagement from "./pages/dashboard/UserManagement";
 import SystemStats from "./pages/dashboard/SystemStats";
 import MenuItemManagement from "./pages/dashboard/MenuItemmanagement";
+import AdminReservations from "./pages/dashboard/AdminReservations";
 
 // Scroll to top on route change
 const ScrollToTop = () => {
@@ -98,6 +99,14 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={["admin", "moderator"]}>
                     <MenuItemManagement />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="reservations"
+                element={
+                  <ProtectedRoute allowedRoles={["admin"]}>
+                    <AdminReservations />
                   </ProtectedRoute>
                 }
               />

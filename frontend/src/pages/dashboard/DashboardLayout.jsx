@@ -10,6 +10,7 @@ import {
   X,
   ChevronDown,
   UtensilsCrossed,
+  CalendarCheck,
 } from "lucide-react";
 import { AuthContext } from "../../context/AuthContext";
 
@@ -31,6 +32,12 @@ const navItems = [
     path: "/dashboard/menu-items",
     icon: UtensilsCrossed,
     roles: ["admin", "moderator"],
+  },
+  {
+    label: "Reservations",
+    path: "/dashboard/reservations",
+    icon: CalendarCheck,
+    roles: ["admin"],
   },
   {
     label: "System Stats",
