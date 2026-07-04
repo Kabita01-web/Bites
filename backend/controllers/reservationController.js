@@ -1,18 +1,32 @@
 import Reservation from "../models/Reservation.js";
 
-// Create reservation
+import { sendReservationEmail } from "../utils/mailer.js";
+
 export const createReservation = async (req, res) => {
   try {
     const { date, time, guests, occasion, specialRequests } = req.body;
 
     const reservation = await Reservation.create({
-      user: req.user._id, // comes from your auth middleware
+      user: req.user._id,
       date,
       time,
       guests,
       occasion,
       specialRequests,
     });
+
+    try {
+      await sendReservationEmail(
+        req.user.email,
+        req.user.username,
+        date,
+        time,
+        guests,
+      );
+    } catch (emailErr) {
+      console.error("Email failed to send:", emailErr);
+      // don't block the reservation response on email failure
+    }
 
     res.status(201).json(reservation);
   } catch (err) {
