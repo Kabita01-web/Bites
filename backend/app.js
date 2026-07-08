@@ -8,7 +8,7 @@ import userRoute from "./routes/userRoute.js";
 import menuRoute from "./routes/menuRoute.js";
 import menuItemRoute from "./routes/menuItemRoute.js";
 import reservationRoutes from "./routes/reservationRoutes.js";
-
+import cartRoutes from "./routes/cartRoutes.js";
 
 dotenv.config();
 
@@ -35,6 +35,7 @@ app.use("/api/users", userRoute);
 app.use("/api/menus", menuRoute);
 app.use("/api/menu-items", menuItemRoute);
 app.use("/api/reservations", reservationRoutes);
+app.use("/api/cart", cartRoutes);
 
 mongoose
   .connect(process.env.MONGODB_URI)
