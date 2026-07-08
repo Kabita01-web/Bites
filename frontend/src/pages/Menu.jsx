@@ -14,76 +14,26 @@ const Menu = () => {
 
   useEffect(() => {
     const fetchMenu = async () => {
+      setLoading(true);
+      setError("");
+
       try {
-        let combinedDishes = [];
-        let backendData = [];
-        let localData = [];
+        const json = await getAllMenuItemsAdmin();
+        const data = json?.data;
 
-        // Fetch from backend
-        try {
-          const json = await getAllMenuItemsAdmin();
-          const data = json?.data;
+        if (Array.isArray(data) && data.length > 0) {
+          const backendData = data
+            .filter((item) => item.isAvailable !== false)
+            .map((item) => ({
+              ...item,
+              _id: item._id || item.id,
+            }));
 
-          if (Array.isArray(data) && data.length > 0) {
-            backendData = data
-              .filter((item) => item.isAvailable !== false)
-              .map((item) => ({
-                ...item,
-                _id:
-                  item._id ||
-                  item.id ||
-                  `backend_${item.name?.toLowerCase().replace(/\s+/g, "_")}`,
-              }));
-          }
-        } catch (backendErr) {
-          console.log("Backend not available:", backendErr.message);
+          setAllDishes(backendData);
+        } else {
+          setAllDishes([]);
+          setError("No menu items available");
         }
-
-        // Fetch from local JSON
-        try {
-          const response = await fetch("/menu.json");
-
-          if (response.ok) {
-            const data = await response.json();
-
-            if (Array.isArray(data)) {
-              localData = data
-                .filter((item) => item.isAvailable !== false)
-                .map((item) => ({
-                  ...item,
-                  _id:
-                    item.id ||
-                    item._id ||
-                    `local_${item.name?.toLowerCase().replace(/\s+/g, "_")}`,
-                }));
-            }
-          }
-        } catch (localErr) {
-          console.log("Local JSON not available:", localErr.message);
-        }
-
-        // Combine both data sources
-        combinedDishes = [...backendData, ...localData];
-
-        // Remove duplicates based on name (case insensitive)
-        const uniqueDishes = combinedDishes.reduce((acc, current) => {
-          const exists = acc.find(
-            (item) => item.name?.toLowerCase() === current.name?.toLowerCase(),
-          );
-          if (!exists) {
-            acc.push(current);
-          } else {
-            // If duplicate exists, keep the backend version
-            if (current._source === "backend") {
-              const index = acc.indexOf(exists);
-              acc[index] = current;
-            }
-          }
-          return acc;
-        }, []);
-
-        setAllDishes(uniqueDishes);
-        setError("");
       } catch (err) {
         console.error("Error fetching menu:", err);
         setError("Could not load the menu. Please try again later.");
@@ -357,7 +307,7 @@ const Menu = () => {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {currentItems.map((item, index) => (
                   <motion.div
-                    key={item._id ?? item.id ?? index}
+                    key={item._id || item.id || index}
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}

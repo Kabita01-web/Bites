@@ -14,6 +14,7 @@ import {
 import { AnimatePresence } from "framer-motion";
 import { AuthContext } from "../context/AuthContext";
 import AuthModal from "./AuthModel";
+import CartIcon from "./CartIcon";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -65,7 +66,6 @@ const Navbar = () => {
     );
   }
 
-  // Updated nav links - Gallery removed, added Reservations
   const navLinks = [
     { name: "Home", path: "/" },
     { name: "Menu", path: "/menu" },
@@ -174,6 +174,9 @@ const Navbar = () => {
 
           {/* Desktop Right Side */}
           <div className="hidden md:flex items-center gap-3">
+            {/* Cart Icon */}
+            <CartIcon scrolled={scrolled} />
+
             {user ? (
               <>
                 {/* User dropdown */}
@@ -336,6 +339,16 @@ const Navbar = () => {
                     {link.name}
                   </Link>
                 ))}
+
+                <div className="h-px bg-gray-100 my-3" />
+
+                {/* Mobile Cart Section */}
+                <div className="flex items-center justify-between px-3 py-2">
+                  <span className="text-sm font-semibold text-gray-600">
+                    Cart
+                  </span>
+                  <CartIcon scrolled={true} />
+                </div>
 
                 <div className="h-px bg-gray-100 my-3" />
 

@@ -109,4 +109,30 @@ export const updateReservationStatusAdmin = async (reservationId, status) => {
   return response.data;
 };
 
+// ── Cart ──
+export const getCart = async () => {
+  const response = await instance.get("/cart");
+  return response.data;
+};
+
+export const addToCart = async (menuItemId, quantity = 1) => {
+  const response = await instance.post("/cart", { menuItemId, quantity });
+  return response.data;
+};
+
+export const updateCartItem = async (menuItemId, quantity) => {
+  const response = await instance.put(`/cart/${menuItemId}`, { quantity });
+  return response.data;
+};
+
+export const removeFromCart = async (menuItemId) => {
+  const response = await instance.delete(`/cart/${menuItemId}`);
+  return response.data;
+};
+
+export const clearCart = async () => {
+  const response = await instance.delete("/cart");
+  return response.data;
+};
+
 export default instance;

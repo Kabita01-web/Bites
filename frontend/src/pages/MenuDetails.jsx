@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 // eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { getMenuItemByIdAdmin, getAllMenuItemsAdmin } from "../services/api";
+import { CartContext } from "../context/CartContext"; // This now works
 
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=1200";
@@ -10,16 +11,17 @@ const FALLBACK_IMAGE =
 const MenuDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { addItem } = useContext(CartContext); // This will now work
 
   const [dish, setDish] = useState(null);
   const [relatedDishes, setRelatedDishes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [dataSource, setDataSource] = useState("");
 
   const [quantity, setQuantity] = useState(1);
   const [specialInstructions, setSpecialInstructions] = useState("");
   const [addedToCart, setAddedToCart] = useState(false);
+  const [cartError, setCartError] = useState("");
 
   // Helper function to get image URL
   const getImageUrl = (item) => {
@@ -49,93 +51,27 @@ const MenuDetails = () => {
       setError("");
 
       try {
-        // Try to fetch from backend first
-        try {
-          const json = await getMenuItemByIdAdmin(id);
-          if (json.success && json.data) {
-            const dishData = json.data;
-            setDish(dishData);
-            setDataSource("backend");
+        const json = await getMenuItemByIdAdmin(id);
+        if (json.success && json.data) {
+          const dishData = json.data;
+          setDish(dishData);
 
-            // Fetch related dishes from backend
-            const allJson = await getAllMenuItemsAdmin();
-            const all = Array.isArray(allJson?.data) ? allJson.data : [];
-            const related = all
-              .filter(
-                (item) =>
-                  item.category === dishData.category &&
-                  item._id !== dishData._id &&
-                  item.isAvailable !== false,
-              )
-              .slice(0, 3);
-            setRelatedDishes(related);
-            setLoading(false);
-            return;
-          }
-        } catch (backendErr) {
-          console.log(
-            "Backend not available, trying local JSON:",
-            backendErr.message,
-          );
+          // Fetch related dishes from backend
+          const allJson = await getAllMenuItemsAdmin();
+          const all = Array.isArray(allJson?.data) ? allJson.data : [];
+          const related = all
+            .filter(
+              (item) =>
+                item.category === dishData.category &&
+                item._id !== dishData._id &&
+                item.isAvailable !== false,
+            )
+            .slice(0, 3);
+          setRelatedDishes(related);
+          setLoading(false);
+        } else {
+          throw new Error("Dish not found");
         }
-
-        // Fallback to local JSON
-        try {
-          const response = await fetch("/menu.json");
-          if (response.ok) {
-            const data = await response.json();
-            if (Array.isArray(data)) {
-              // Try to find by id (number) or _id (string)
-              const foundItem = data.find(
-                (item) =>
-                  String(item.id) === String(id) ||
-                  item._id === id ||
-                  String(item._id) === String(id),
-              );
-
-              if (foundItem) {
-                // Transform to match expected structure
-                const transformedItem = {
-                  ...foundItem,
-                  _id: foundItem.id || foundItem._id,
-                  imageUrl: foundItem.image || foundItem.imageUrl,
-                  tags: foundItem.dietary || [], // Use dietary as tags
-                  isAvailable: true,
-                  // Keep original fields
-                  dietary: foundItem.dietary || [],
-                  spiceLevel: foundItem.spiceLevel || "",
-                  nutritionalInfo: foundItem.nutritionalInfo || null,
-                  allergens: foundItem.allergens || [],
-                  priceValue:
-                    foundItem.priceValue || getPriceNumber(foundItem.price),
-                };
-                setDish(transformedItem);
-                setDataSource("local");
-
-                // Get related dishes from local
-                const related = data
-                  .filter(
-                    (item) =>
-                      item.category === foundItem.category &&
-                      String(item.id) !== String(foundItem.id),
-                  )
-                  .slice(0, 3)
-                  .map((item) => ({
-                    ...item,
-                    _id: item.id || item._id,
-                    imageUrl: item.image || item.imageUrl,
-                  }));
-                setRelatedDishes(related);
-                setLoading(false);
-                return;
-              }
-            }
-          }
-        } catch (localErr) {
-          console.log("Local JSON not available:", localErr.message);
-        }
-
-        throw new Error("Dish not found in any source");
       } catch (err) {
         setError(
           err.message ||
@@ -147,16 +83,16 @@ const MenuDetails = () => {
     fetchDish();
   }, [id]);
 
-  const handleAddToCart = () => {
-    const priceNumber = dish.priceValue || getPriceNumber(dish.price);
-    console.log("Added to cart:", {
-      ...dish,
-      quantity,
-      specialInstructions,
-      total: priceNumber * quantity,
-    });
-    setAddedToCart(true);
-    setTimeout(() => setAddedToCart(false), 3000);
+  const handleAddToCart = async () => {
+    try {
+      setCartError("");
+      await addItem(dish._id, quantity);
+      setAddedToCart(true);
+      setTimeout(() => setAddedToCart(false), 3000);
+    } catch (err) {
+      console.error("Failed to add to cart:", err);
+      setCartError("Could not add this item to your cart. Please try again.");
+    }
   };
 
   if (loading) {
@@ -221,17 +157,6 @@ const MenuDetails = () => {
                 <span className="inline-block bg-primary/90 backdrop-blur-sm text-white text-sm px-4 py-1 rounded-full">
                   {dish.category}
                 </span>
-                {dataSource && (
-                  <span
-                    className={`inline-block text-white text-xs px-3 py-1 rounded-full backdrop-blur-sm ${
-                      dataSource === "backend"
-                        ? "bg-green-500/70"
-                        : "bg-blue-500/70"
-                    }`}
-                  >
-                    {dataSource === "backend" ? "🌐 Live" : "📋 Local"}
-                  </span>
-                )}
               </div>
               <h1 className="text-4xl md:text-6xl lg:text-7xl font-serif font-bold text-white mb-4">
                 {dish.name}
@@ -451,6 +376,13 @@ const MenuDetails = () => {
                   Add to Cart
                 </button>
 
+                {/* Cart Error Message */}
+                {cartError && (
+                  <div className="mt-3 p-3 bg-red-100 text-red-700 rounded-lg text-center text-sm">
+                    {cartError}
+                  </div>
+                )}
+
                 {/* Success Message */}
                 {addedToCart && (
                   <motion.div
@@ -524,8 +456,8 @@ const MenuDetails = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {relatedDishes.map((item) => (
                 <Link
-                  key={item._id || item.id}
-                  to={`/menu/${item._id || item.id}`}
+                  key={item._id}
+                  to={`/menu/${item._id}`}
                   className="group bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
                 >
                   <div className="relative h-48 overflow-hidden">

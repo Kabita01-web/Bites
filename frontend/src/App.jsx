@@ -26,6 +26,11 @@ import UserManagement from "./pages/dashboard/UserManagement";
 import SystemStats from "./pages/dashboard/SystemStats";
 import MenuItemManagement from "./pages/dashboard/MenuItemmanagement";
 import AdminReservations from "./pages/dashboard/AdminReservations";
+import OrderBoard from "./pages/dashboard/OrderBoard";
+import CartPage from "./pages/CartPage";
+import { CartProvider } from "./context/CartContext"; // ✅ CartProvider is here
+import Checkout from "./pages/Checkout";
+import PaymentStatus from "./pages/PaymentStatus";
 
 // Scroll to top on route change
 const ScrollToTop = () => {
@@ -111,6 +116,19 @@ function App() {
                 }
               />
             </Route>
+            <Route path="OrderBoard" element={<OrderBoard />} />
+            <Route path="/cartpage" element={<CartPage />} />
+            <Route
+              path="*"
+              element={
+                <h1 className="text-center mt-20 text-3xl">
+                  404 - Page Not Found
+                </h1>
+              }
+            />
+            <Route path="/checkout" element={<Checkout />} />
+            <Route path="/payment-success" element={<PaymentStatus />} />
+            <Route path="/payment-failure" element={<PaymentStatus />} />
           </Routes>
         </main>
         <Footer />
