@@ -7,9 +7,15 @@ export const ROLES = {
   ADMIN: "admin",
 };
 
+// Protect middleware - requires authentication
 export const protect = async (req, res, next) => {
   try {
-    const token = req.cookies.token;
+    // Get token from cookie or Authorization header
+    let token = req.cookies.token;
+
+    if (!token && req.headers.authorization) {
+      token = req.headers.authorization.split(" ")[1]; // Bearer TOKEN
+    }
 
     if (!token) {
       return res.status(401).json({ message: "Not authorized, no token" });
@@ -28,6 +34,7 @@ export const protect = async (req, res, next) => {
   }
 };
 
+// Authorize middleware - checks user role
 export const authorize = (...roles) => {
   return (req, res, next) => {
     if (!req.user) {
@@ -36,7 +43,7 @@ export const authorize = (...roles) => {
 
     if (!roles.includes(req.user.role)) {
       return res.status(403).json({
-        message: `Access denied. ${req.user.role} role cannot access this dashboard`,
+        message: `Access denied. ${req.user.role} role cannot access this resource`,
       });
     }
 
@@ -44,5 +51,17 @@ export const authorize = (...roles) => {
   };
 };
 
-// Also keep default export for backward compatibility
+// Admin auth (convenience function)
+export const adminAuth = async (req, res, next) => {
+  await protect(req, res, async () => {
+    if (req.user.role !== ROLES.ADMIN && req.user.role !== ROLES.MODERATOR) {
+      return res.status(403).json({
+        message: `Access denied. ${req.user.role} role cannot access this resource`,
+      });
+    }
+    next();
+  });
+};
+
+// For backward compatibility
 export default protect;
