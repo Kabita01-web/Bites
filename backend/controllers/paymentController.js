@@ -1,273 +1,409 @@
-import Payment from "../models/Payment.js";
-import Order from "../models/Order.js";
-import axios from "axios";
 import crypto from "crypto";
+import axios from "axios";
+import Order from "../models/Order.js";
+import Payment from "../models/Payment.js";
+import Cart from "../models/Cart.js";
+import { generateMerchantOrderId } from "../utils/esewa.js";
 
-// Initialize eSewa payment
-export const initiateEsewa = async (req, res) => {
+// ============================================================
+// 1) INITIATE eSEWA PAYMENT
+// ============================================================
+export const initiateEsewaPayment = async (req, res) => {
   try {
     const { orderId } = req.body;
-    const userId = req.user.id;
+    const userId = req.user._id;
 
+    // Find the order
     const order = await Order.findById(orderId);
     if (!order) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Order not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
     }
 
-    const payment = new Payment({
-      orderId: order._id,
-      userId: userId,
-      amount: order.total,
-      method: "esewa",
-      status: "pending",
-    });
-    await payment.save();
+    // Verify order belongs to user
+    if (order.user.toString() !== userId.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
 
-    const transactionUuid = `TXN${Date.now()}`;
-    const productId = `PROD${order._id.toString().slice(-6)}`;
+    // Check if already paid
+    if (order.isPaid) {
+      return res.status(400).json({
+        success: false,
+        message: "Order already paid",
+      });
+    }
 
-    const esewaData = {
-      amount: order.total.toString(),
-      product_id: productId,
-      transaction_uuid: transactionUuid,
-      product_delivery_charge: "0",
-      product_service_charge: "0",
-      tax_amount: "0",
-      total_amount: order.total.toString(),
-      success_url: `${process.env.FRONTEND_URL}/payment-success?orderId=${orderId}`,
-      failure_url: `${process.env.FRONTEND_URL}/payment-failure?orderId=${orderId}`,
+    // Generate merchant order ID if not exists
+    if (!order.esewaMerchantOrderId) {
+      order.esewaMerchantOrderId = generateMerchantOrderId();
+      await order.save();
+    }
+
+    // ✅ Ensure all amounts are integers (no decimals)
+    const amount = Math.round(order.subtotal || 0);
+    const taxAmount = Math.round(order.tax || 0);
+    const deliveryCharge = Math.round(order.deliveryFee || 0);
+    const serviceCharge = 0;
+
+    const totalAmount = amount + taxAmount + deliveryCharge + serviceCharge;
+
+    const formData = {
+      amount: amount.toString(),
+      tax_amount: taxAmount.toString(),
+      product_service_charge: serviceCharge.toString(),
+      product_delivery_charge: deliveryCharge.toString(),
+      total_amount: totalAmount.toString(),
+
+      transaction_uuid: order.esewaMerchantOrderId,
+      product_code: process.env.ESEWA_PRODUCT_CODE || "EPAYTEST",
+      success_url:
+        process.env.ESEWA_SUCCESS_URL ||
+        "http://localhost:5000/api/payments/esewa-success",
+      failure_url:
+        process.env.ESEWA_FAILURE_URL ||
+        "http://localhost:5000/api/payments/esewa-failure",
       signed_field_names: "total_amount,transaction_uuid,product_code",
-      product_code: process.env.ESEWA_MERCHANT_ID || "EPAYTEST",
     };
 
-    const signatureData = `total_amount=${esewaData.total_amount},transaction_uuid=${esewaData.transaction_uuid},product_code=${esewaData.product_code}`;
+    // Generate signature
+    const signatureString = `total_amount=${formData.total_amount},transaction_uuid=${formData.transaction_uuid},product_code=${formData.product_code}`;
+
+    console.log("🔐 Signature string:", signatureString);
+
     const signature = crypto
       .createHmac("sha256", process.env.ESEWA_SECRET_KEY || "8gBm/:&EnhH.1/q")
-      .update(signatureData)
+      .update(signatureString)
       .digest("base64");
 
-    esewaData.signature = signature;
+    formData.signature = signature;
 
-    payment.transactionId = transactionUuid;
-    await payment.save();
-
-    res.json({
-      success: true,
-      paymentUrl: "https://rc-epay.esewa.com.np/api/epay/main/v2/form",
-      data: esewaData,
-      transactionId: transactionUuid,
+    console.log("📤 Sending to eSewa:", {
+      gatewayUrl: process.env.ESEWA_GATEWAY_URL,
+      formData: formData,
     });
-  } catch (error) {
-    console.error("eSewa initiation error:", error);
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
 
-// Verify eSewa payment
-export const verifyEsewa = async (req, res) => {
-  try {
-    const { transactionId, orderId, amount, productId } = req.body;
-
-    const payment = await Payment.findOne({ transactionId });
-    if (payment) {
-      payment.status = "paid";
-      payment.gatewayResponse = { verified: true, transactionId };
-      await payment.save();
-
-      const order = await Order.findById(payment.orderId);
-      if (order) {
-        order.paymentStatus = "paid";
-        order.orderStatus = "confirmed";
-        await order.save();
-      }
-    }
-
-    res.json({
+    res.status(200).json({
       success: true,
-      message: "Payment verified successfully",
-      orderId: orderId,
-    });
-  } catch (error) {
-    console.error("eSewa verification error:", error);
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-// Initialize Khalti payment
-export const initiateKhalti = async (req, res) => {
-  try {
-    const { orderId, mobile } = req.body;
-    const userId = req.user.id;
-
-    const order = await Order.findById(orderId);
-    if (!order) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Order not found" });
-    }
-
-    const payment = new Payment({
+      gatewayUrl:
+        process.env.ESEWA_GATEWAY_URL ||
+        "https://uat.esewa.com.np/api/epay/main/v2/form",
+      formData: formData,
+      merchantOrderId: order.esewaMerchantOrderId,
       orderId: order._id,
-      userId: userId,
-      amount: order.total,
-      method: "khalti",
-      status: "pending",
-    });
-    await payment.save();
-
-    const khaltiData = {
-      amount: Math.round(order.total * 100),
-      product_identity: `ORD${order._id.toString().slice(-6)}`,
-      product_name: "Food Order",
-      product_url: `${process.env.FRONTEND_URL}/`,
-      mobile: mobile || order.shippingAddress.phone,
-      email: order.shippingAddress.email || "customer@example.com",
-      website_url: process.env.FRONTEND_URL,
-      transaction_id: `TXN${Date.now()}`,
-    };
-
-    const transactionId = khaltiData.transaction_id;
-    payment.transactionId = transactionId;
-    await payment.save();
-
-    res.json({
-      success: true,
-      paymentUrl: "https://khalti.com/epayment/",
-      transactionId: transactionId,
     });
   } catch (error) {
-    console.error("Khalti initiation error:", error);
-    res.status(500).json({ success: false, message: error.message });
+    console.error("❌ Initiate eSewa payment error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to initiate payment",
+    });
   }
 };
 
-// Verify Khalti payment
-export const verifyKhalti = async (req, res) => {
+// ============================================================
+// 2) HANDLE eSEWA SUCCESS CALLBACK
+// ============================================================
+export const handleEsewaSuccess = async (req, res) => {
   try {
-    const { transactionId, orderId } = req.body;
+    console.log("✅ eSewa Success Callback Received");
+    console.log("Query params:", req.query);
 
-    const payment = await Payment.findOne({ transactionId });
-    if (payment) {
-      payment.status = "paid";
-      payment.gatewayResponse = { verified: true };
-      await payment.save();
+    const { data, q } = req.query;
 
-      const order = await Order.findById(payment.orderId);
-      if (order) {
-        order.paymentStatus = "paid";
-        order.orderStatus = "confirmed";
-        await order.save();
-      }
+    if (!data) {
+      console.error("❌ No data parameter in callback");
+      return res.redirect(
+        `${process.env.PAYMENT_FAILURE_REDIRECT || "http://localhost:5173/payment/failure"}?error=no_data`,
+      );
     }
 
-    res.json({
-      success: true,
-      message: "Payment verified successfully",
-      orderId: orderId,
+    // Decode the base64 data
+    let decodedData;
+    try {
+      const decodedString = Buffer.from(data, "base64").toString("utf-8");
+      decodedData = JSON.parse(decodedString);
+      console.log("✅ Decoded eSewa Data:", decodedData);
+    } catch (error) {
+      console.error("❌ Failed to decode eSewa data:", error);
+      return res.redirect(
+        `${process.env.PAYMENT_FAILURE_REDIRECT || "http://localhost:5173/payment/failure"}?error=invalid_data`,
+      );
+    }
+
+    // Find order by merchant order ID
+    const order = await Order.findOne({
+      esewaMerchantOrderId: decodedData.transaction_uuid,
     });
-  } catch (error) {
-    console.error("Khalti verification error:", error);
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
 
-// Process Cash on Delivery
-export const processCashOnDelivery = async (req, res) => {
-  try {
-    const { orderId } = req.body;
-    const userId = req.user.id;
-
-    const order = await Order.findById(orderId);
     if (!order) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Order not found" });
+      console.error(
+        "❌ Order not found for UUID:",
+        decodedData.transaction_uuid,
+      );
+      return res.redirect(
+        `${process.env.PAYMENT_FAILURE_REDIRECT || "http://localhost:5173/payment/failure"}?error=order_not_found`,
+      );
     }
 
-    const payment = new Payment({
-      orderId: order._id,
-      userId: userId,
-      amount: order.total,
-      method: "cash",
-      status: "pending",
-    });
-    await payment.save();
+    console.log("✅ Order found:", order._id);
 
-    order.paymentStatus = "pending";
-    order.orderStatus = "confirmed";
-    await order.save();
+    // Verify payment with eSewa API
+    try {
+      const verificationResponse = await axios.get(
+        `https://rc.esewa.com.np/api/epay/transaction/status/?product_code=${process.env.ESEWA_PRODUCT_CODE || "EPAYTEST"}&total_amount=${order.total}&transaction_uuid=${order.esewaMerchantOrderId}`,
+      );
 
-    res.json({
-      success: true,
-      message: "Order placed with Cash on Delivery",
-      orderId: orderId,
-    });
-  } catch (error) {
-    console.error("COD processing error:", error);
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
+      console.log("🔍 Verification Response:", verificationResponse.data);
 
-// ✅ ADD THIS - Payment Webhook
-export const webhook = async (req, res) => {
-  try {
-    const { transactionId, orderId, status } = req.body;
-
-    const payment = await Payment.findOne({ transactionId });
-    if (!payment) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Payment not found" });
-    }
-
-    if (status === "success") {
-      payment.status = "paid";
-      await payment.save();
-
-      const order = await Order.findById(payment.orderId);
-      if (order) {
+      if (verificationResponse.data.status === "COMPLETE") {
+        // Mark order as paid
+        order.isPaid = true;
+        order.paidAt = new Date();
         order.paymentStatus = "paid";
-        order.orderStatus = "confirmed";
+        order.esewaTransactionId =
+          decodedData.transaction_code || decodedData.transaction_id || "N/A";
+        order.esewaReferenceId = decodedData.ref_id || "N/A";
+        order.esewaResponseData = decodedData;
         await order.save();
-      }
-    } else {
-      payment.status = "failed";
-      await payment.save();
-    }
 
-    res.json({ success: true });
+        // Clear cart
+        await Cart.findOneAndDelete({ user: order.user });
+
+        console.log("✅ Order marked as paid:", order._id);
+
+        // Redirect to success page
+        return res.redirect(
+          `${process.env.PAYMENT_SUCCESS_REDIRECT || "http://localhost:5173/payment/success"}?orderId=${order._id}&method=esewa`,
+        );
+      } else {
+        // Payment verification failed
+        order.paymentStatus = "failed";
+        await order.save();
+
+        console.log(
+          "❌ Verification failed:",
+          verificationResponse.data.status,
+        );
+        return res.redirect(
+          `${process.env.PAYMENT_FAILURE_REDIRECT || "http://localhost:5173/payment/failure"}?orderId=${order._id}&error=verification_failed`,
+        );
+      }
+    } catch (error) {
+      console.error("❌ Verification API error:", error);
+      order.paymentStatus = "failed";
+      await order.save();
+      return res.redirect(
+        `${process.env.PAYMENT_FAILURE_REDIRECT || "http://localhost:5173/payment/failure"}?orderId=${order._id}&error=verification_error`,
+      );
+    }
   } catch (error) {
-    console.error("Webhook error:", error);
-    res.status(500).json({ success: false, message: error.message });
+    console.error("❌ eSewa Success Error:", error);
+    return res.redirect(
+      `${process.env.PAYMENT_FAILURE_REDIRECT || "http://localhost:5173/payment/failure"}?error=server_error`,
+    );
   }
 };
 
-// ✅ ADD THIS - Get Payment Status
+// ============================================================
+// 3) HANDLE eSEWA FAILURE CALLBACK
+// ============================================================
+export const handleEsewaFailure = async (req, res) => {
+  try {
+    console.log("❌ eSewa Failure Callback Received");
+    console.log("Query params:", req.query);
+
+    const { data, q } = req.query;
+
+    let orderId = null;
+
+    if (data) {
+      try {
+        const decodedString = Buffer.from(data, "base64").toString("utf-8");
+        const decodedData = JSON.parse(decodedString);
+        console.log("❌ Decoded Failure Data:", decodedData);
+
+        const order = await Order.findOne({
+          esewaMerchantOrderId: decodedData.transaction_uuid,
+        });
+
+        if (order) {
+          order.paymentStatus = "failed";
+          order.esewaResponseData = decodedData;
+          await order.save();
+          orderId = order._id;
+          console.log("❌ Order marked as failed:", orderId);
+        }
+      } catch (error) {
+        console.error("❌ Failed to decode failure data:", error);
+      }
+    }
+
+    return res.redirect(
+      `${process.env.PAYMENT_FAILURE_REDIRECT || "http://localhost:5173/payment/failure"}?orderId=${orderId || ""}&error=payment_cancelled`,
+    );
+  } catch (error) {
+    console.error("❌ eSewa Failure Error:", error);
+    return res.redirect(
+      `${process.env.PAYMENT_FAILURE_REDIRECT || "http://localhost:5173/payment/failure"}?error=server_error`,
+    );
+  }
+};
+
+// ============================================================
+// 4) VERIFY eSEWA PAYMENT
+// ============================================================
+export const verifyEsewaPayment = async (req, res) => {
+  try {
+    const { merchantOrderId } = req.query;
+
+    if (!merchantOrderId) {
+      return res.status(400).json({
+        success: false,
+        message: "Merchant order ID is required",
+      });
+    }
+
+    const order = await Order.findOne({
+      esewaMerchantOrderId: merchantOrderId,
+    });
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      order: {
+        id: order._id,
+        isPaid: order.isPaid,
+        paymentStatus: order.paymentStatus,
+        esewaTransactionId: order.esewaTransactionId,
+      },
+    });
+  } catch (error) {
+    console.error("Verify eSewa payment error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to verify payment",
+    });
+  }
+};
+
+// ============================================================
+// 5) GET PAYMENT STATUS
+// ============================================================
 export const getPaymentStatus = async (req, res) => {
   try {
-    const { transactionId } = req.params;
+    const { orderId } = req.params;
+    const userId = req.user._id;
 
-    const payment = await Payment.findOne({ transactionId });
-    if (!payment) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Payment not found" });
+    const order = await Order.findById(orderId);
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
     }
 
-    res.json({
+    if (order.user.toString() !== userId.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
+
+    return res.status(200).json({
       success: true,
-      payment: {
-        status: payment.status,
-        amount: payment.amount,
-        method: payment.method,
-        transactionId: payment.transactionId,
-        createdAt: payment.createdAt,
+      order: {
+        id: order._id,
+        isPaid: order.isPaid,
+        paidAt: order.paidAt,
+        paymentStatus: order.paymentStatus,
+        esewaTransactionId: order.esewaTransactionId,
+        total: order.total,
+        items: order.items,
+        deliveryAddress: order.deliveryAddress,
       },
     });
   } catch (error) {
     console.error("Get payment status error:", error);
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to get payment status",
+    });
+  }
+};
+
+// ============================================================
+// 6) GET ALL PAYMENTS (Admin only)
+// ============================================================
+export const getAllPayments = async (req, res) => {
+  try {
+    const payments = await Payment.find()
+      .populate("user", "name email")
+      .populate("order", "total status")
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      count: payments.length,
+      payments,
+    });
+  } catch (error) {
+    console.error("Get all payments error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to get payments",
+    });
+  }
+};
+
+// ============================================================
+// 7) REFUND PAYMENT (Admin only)
+// ============================================================
+export const refundPayment = async (req, res) => {
+  try {
+    const { paymentId } = req.params;
+
+    const payment = await Payment.findById(paymentId);
+    if (!payment) {
+      return res.status(404).json({
+        success: false,
+        message: "Payment not found",
+      });
+    }
+
+    // Update payment status
+    payment.status = "refunded";
+    await payment.save();
+
+    // Update order
+    const order = await Order.findById(payment.order);
+    if (order) {
+      order.isPaid = false;
+      order.paymentStatus = "refunded";
+      await order.save();
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Payment refunded successfully",
+      payment,
+    });
+  } catch (error) {
+    console.error("Refund payment error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to refund payment",
+    });
   }
 };
