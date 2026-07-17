@@ -1,95 +1,70 @@
+// backend/models/Order.js
 import mongoose from "mongoose";
+// backend/models/Order.js
 
-const orderSchema = new mongoose.Schema({
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    required: true,
-  },
-  items: [
-    {
-      menuItemId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "MenuItem",
-        required: true,
-      },
-      name: String,
-      quantity: Number,
-      price: Number,
+const orderSchema = new mongoose.Schema(
+  {
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
     },
-  ],
-  subtotal: {
-    type: Number,
-    required: true,
-  },
-  tax: {
-    type: Number,
-    default: 0,
-  },
-  deliveryFee: {
-    type: Number,
-    default: 0,
-  },
-  total: {
-    type: Number,
-    required: true,
-  },
-  paymentMethod: {
-    type: String,
-    enum: ["esewa", "khalti", "mobileBanking", "card", "cash"],
-    required: true,
-  },
-  paymentStatus: {
-    type: String,
-    enum: ["pending", "paid", "failed", "refunded"],
-    default: "pending",
-  },
-  orderStatus: {
-    type: String,
-    enum: [
-      "pending",
-      "confirmed",
-      "preparing",
-      "out-for-delivery",
-      "delivered",
-      "cancelled",
+    items: [
+      {
+        menuItem: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "MenuItem",
+          required: true,
+        },
+        name: { type: String, required: true },
+        price: { type: Number, required: true },
+        quantity: { type: Number, required: true, min: 1 },
+      },
     ],
-    default: "pending",
+    // ✅ Nested deliveryAddress object
+    deliveryAddress: {
+      fullName: { type: String, required: true },
+      phone: { type: String, required: true },
+      street: { type: String, required: true },
+      city: { type: String, required: true },
+      landmark: { type: String },
+    },
+    subtotal: { type: Number, required: true },
+    tax: { type: Number, required: true },
+    deliveryFee: { type: Number, required: true },
+    total: { type: Number, required: true },
+    currency: { type: String, default: "NPR" },
+    status: {
+      type: String,
+      enum: ["pending", "confirmed", "preparing", "delivered", "cancelled"],
+      default: "pending",
+    },
+    paymentStatus: {
+      type: String,
+      enum: ["pending", "paid", "failed", "refunded"],
+      default: "pending",
+    },
+    isPaid: { type: Boolean, default: false },
+    paidAt: { type: Date },
+    esewaMerchantOrderId: { type: String, unique: true, sparse: true },
+    esewaTransactionId: { type: String, unique: true, sparse: true },
+    esewaReferenceId: { type: String },
+    esewaResponseData: { type: Object },
   },
-  shippingAddress: {
-    firstName: String,
-    lastName: String,
-    email: String,
-    phone: String,
-    address: String,
-    apartment: String,
-    city: String,
-    state: String,
-    zipCode: String,
+  {
+    timestamps: true,
   },
-  specialInstructions: String,
-  orderNumber: {
-    type: String,
-    unique: true,
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-});
+);
 
-// Generate order number before saving
-orderSchema.pre("save", function (next) {
+// Auto-generate orderNumber if it's not already set.
+orderSchema.pre("save", async function () {
   if (!this.orderNumber) {
     const timestamp = Date.now().toString().slice(-8);
-    const random = Math.floor(Math.random() * 1000)
-      .toString()
-      .padStart(3, "0");
-    this.orderNumber = `ORD-${timestamp}-${random}`;
+    const random = Math.floor(1000 + Math.random() * 9000);
+    this.orderNumber = `BITES-${timestamp}-${random}`;
   }
-  next();
 });
 
-// ✅ ADD THIS - Default export
 const Order = mongoose.model("Order", orderSchema);
+
 export default Order;
