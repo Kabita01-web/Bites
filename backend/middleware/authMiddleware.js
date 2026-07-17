@@ -63,5 +63,21 @@ export const adminAuth = async (req, res, next) => {
   });
 };
 
+// ✨ NEW: isAdmin middleware (for paymentRoutes.js)
+export const isAdmin = async (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({ message: "Not authorized" });
+  }
+
+  if (req.user.role !== ROLES.ADMIN && req.user.role !== ROLES.MODERATOR) {
+    return res.status(403).json({
+      success: false,
+      message: `Access denied. ${req.user.role} role cannot access this resource`,
+    });
+  }
+
+  next();
+};
+
 // For backward compatibility
 export default protect;
