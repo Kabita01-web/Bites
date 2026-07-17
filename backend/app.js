@@ -3,6 +3,8 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+
+// Import routes
 import authRoute from "./routes/authRoute.js";
 import userRoute from "./routes/userRoute.js";
 import menuRoute from "./routes/menuRoute.js";
@@ -15,40 +17,44 @@ import orderRoutes from "./routes/orderRoutes.js";
 dotenv.config();
 
 const app = express();
+
+// Middleware
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(
   cors({
-    origin: ["http://localhost:5173"],
+    origin: ["http://localhost:5173", "http://localhost:3000"],
     credentials: true,
   }),
 );
 
-app.get("/", (req, res) => {
-  res.json({ message: "Backend server is running!" });
-});
-
-app.get("/api/test", (req, res) => {
-  res.json({ message: "API is working properly!" });
-});
-
+// Routes
 app.use("/api/auth", authRoute);
 app.use("/api/users", userRoute);
 app.use("/api/menus", menuRoute);
 app.use("/api/menu-items", menuItemRoute);
 app.use("/api/reservations", reservationRoutes);
 app.use("/api/cart", cartRoutes);
-app.use("/api/payment", paymentRoutes);
+app.use("/api/payments", paymentRoutes);
 app.use("/api/orders", orderRoutes);
 
+// Health check
+app.get("/", (req, res) => {
+  res.json({ message: "Server is running" });
+});
+
+// Connect to MongoDB and start server
 mongoose
   .connect(process.env.MONGODB_URI)
   .then(() => {
-    console.log("Connected to MongoDB");
-    app.listen(process.env.PORT, () => {
-      console.log("Server is running on port", process.env.PORT);
+    console.log("✅ Connected to MongoDB");
+    app.listen(process.env.PORT || 5000, () => {
+      console.log(`🚀 Server running on port ${process.env.PORT || 5000}`);
     });
   })
   .catch((error) => {
-    console.error("Error connecting to MongoDB:", error);
+    console.error("❌ MongoDB connection error:", error);
   });
+
+export default app;
