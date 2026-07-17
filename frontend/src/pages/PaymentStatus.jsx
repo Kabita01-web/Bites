@@ -1,84 +1,199 @@
-import React, { useEffect } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { CheckCircle, XCircle, ArrowLeft } from "lucide-react";
-import { motion } from "framer-motion";
+import { useEffect, useState, useCallback } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
+
+import {
+  getPaymentStatus,
+  verifyEsewaPayment,
+  initiateEsewaPayment,
+} from "../services/api";
+import { useCart } from "../context/CartContext";
+
+// -----------------------------------------------------------------------
+// How the user lands here:
+//   - Our backend's /api/payments/esewa-success handler already verified
+//     the signature + called eSewa's status API, then redirected to
+//     /payment-status?status=success&orderId=<id>
+//   - Or /api/payments/esewa-failure redirected to
+//     /payment-status?status=failed&merchantOrderId=<id>
+//   - Or Cash on Delivery redirected here directly with
+//     ?status=success&orderId=<id>&method=cod
+// This page's job is mostly to display that outcome and, for the "failed"
+// case with no clear confirmation yet, do one more explicit verify call
+// as a safety net (e.g. if the user bookmarked/refreshed this URL).
+// -----------------------------------------------------------------------
 
 const PaymentStatus = () => {
-  const location = useLocation();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const searchParams = new URLSearchParams(location.search);
-  const status = searchParams.get("status") || "success";
-  const orderId = searchParams.get("orderId") || "N/A";
+  const { clearCart } = useCart();
+
+  const statusParam = searchParams.get("status");
+  const orderId = searchParams.get("orderId");
+  const merchantOrderId = searchParams.get("merchantOrderId");
+  const method = searchParams.get("method");
+
+  const [status, setStatus] = useState("checking"); // checking | succeeded | failed
+  const [order, setOrder] = useState(null);
+  const [isRetrying, setIsRetrying] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(null);
+
+  const resolveStatus = useCallback(async () => {
+    // Cash on Delivery never touches eSewa — trust the redirect directly.
+    if (method === "cod" && orderId) {
+      try {
+        const data = await getPaymentStatus(orderId);
+        setOrder(data.order);
+        setStatus("succeeded");
+      } catch (err) {
+        setErrorMessage(
+          err?.response?.data?.message || "Could not load order.",
+        );
+        setStatus("failed");
+      }
+      return;
+    }
+
+    if (statusParam === "success" && orderId) {
+      try {
+        const data = await getPaymentStatus(orderId);
+        setOrder(data.order);
+        if (data.order.isPaid) {
+          setStatus("succeeded");
+          clearCart(); // clear only once we've confirmed payment
+        } else {
+          // Backend redirected us here as "success" but the order isn't
+          // marked paid yet — re-verify explicitly rather than assume.
+          if (data.order.esewaMerchantOrderId) {
+            const verifyRes = await verifyEsewaPayment(
+              data.order.esewaMerchantOrderId,
+            );
+            if (verifyRes.verified) {
+              setStatus("succeeded");
+              setOrder(verifyRes.order);
+              clearCart();
+            } else {
+              setStatus("failed");
+            }
+          } else {
+            setStatus("failed");
+          }
+        }
+      } catch (err) {
+        setErrorMessage(
+          err?.response?.data?.message || "Could not confirm payment status.",
+        );
+        setStatus("failed");
+      }
+      return;
+    }
+
+    if (statusParam === "failed") {
+      // Give it one explicit verify attempt in case the failure redirect
+      // fired before eSewa's status API had caught up.
+      if (merchantOrderId) {
+        try {
+          const verifyRes = await verifyEsewaPayment(merchantOrderId);
+          if (verifyRes.verified) {
+            setStatus("succeeded");
+            setOrder(verifyRes.order);
+            clearCart();
+            return;
+          }
+        } catch {
+          // fall through to "failed" display below
+        }
+      }
+      setStatus("failed");
+      return;
+    }
+
+    // No usable params at all.
+    setStatus("failed");
+    setErrorMessage("No payment information was found in the URL.");
+  }, [statusParam, orderId, merchantOrderId, method, clearCart]);
 
   useEffect(() => {
-    // If no status parameter, redirect to home
-    if (!searchParams.get("status")) {
-      navigate("/");
+    resolveStatus();
+  }, [resolveStatus]);
+
+  const handleRetry = async () => {
+    if (!orderId) {
+      setErrorMessage(
+        "Can't retry — no order reference available. Please start checkout again.",
+      );
+      return;
     }
-  }, [navigate, searchParams]);
+    setIsRetrying(true);
+    setErrorMessage(null);
+    try {
+      const intentRes = await initiateEsewaPayment(orderId);
+      // Build and auto-submit a fresh form, same pattern as Checkout.jsx.
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = intentRes.paymentUrl;
+      Object.entries(intentRes.formFields).forEach(([key, value]) => {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = key;
+        input.value = value ?? "";
+        form.appendChild(input);
+      });
+      document.body.appendChild(form);
+      form.submit();
+    } catch (err) {
+      setErrorMessage(
+        err?.response?.data?.message ||
+          "Could not start a new payment attempt.",
+      );
+      setIsRetrying(false);
+    }
+  };
 
-  const isSuccess = status === "success";
+  if (status === "checking") {
+    return (
+      <div className="payment-status-page">
+        <h1>Checking payment status...</h1>
+        <p>Please wait a moment.</p>
+      </div>
+    );
+  }
 
-  return (
-    <div className="pt-28 pb-32 bg-gray-50 min-h-screen flex items-center justify-center">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="bg-white rounded-3xl shadow-xl p-8 md:p-12 max-w-lg w-full mx-4 text-center"
-      >
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ type: "spring", delay: 0.2 }}
-          className={`w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 ${
-            isSuccess ? "bg-green-100" : "bg-red-100"
-          }`}
-        >
-          {isSuccess ? (
-            <CheckCircle size={48} className="text-green-500" />
-          ) : (
-            <XCircle size={48} className="text-red-500" />
-          )}
-        </motion.div>
-
-        <h2
-          className={`text-3xl font-serif font-bold mb-2 ${
-            isSuccess ? "text-green-600" : "text-red-600"
-          }`}
-        >
-          {isSuccess ? "Payment Successful!" : "Payment Failed"}
-        </h2>
-
-        <p className="text-gray-500 mb-4">
-          {isSuccess
-            ? "Thank you for your payment. Your order has been confirmed."
-            : "We couldn't process your payment. Please try again."}
+  if (status === "succeeded") {
+    return (
+      <div className="payment-status-page payment-status-success">
+        <h1>{method === "cod" ? "Order placed!" : "Payment successful!"}</h1>
+        <p>
+          {method === "cod"
+            ? "Your order has been confirmed for Cash on Delivery."
+            : "Thank you — your eSewa payment was confirmed."}
         </p>
-
-        {orderId && orderId !== "N/A" && (
-          <div className="bg-gray-50 rounded-xl p-4 mb-6">
-            <p className="text-sm text-gray-500">Order Number</p>
-            <p className="text-lg font-bold text-primary">{orderId}</p>
+        {order && (
+          <div className="order-confirmation">
+            <p>Order ID: {order._id}</p>
+            <p>Total: NPR {order.total?.toFixed(2)}</p>
+            <p>Status: {order.status}</p>
+            {order.esewaTransactionId && (
+              <p>eSewa Transaction ID: {order.esewaTransactionId}</p>
+            )}
           </div>
         )}
+        <button onClick={() => navigate(`/orders/${order?._id || orderId}`)}>
+          View Order Details
+        </button>
+      </div>
+    );
+  }
 
-        <div className="flex flex-col gap-3">
-          <Link
-            to={isSuccess ? "/" : "/checkout"}
-            className="px-8 py-3 bg-primary text-white rounded-full font-semibold hover:bg-primary/90 transition-all"
-          >
-            {isSuccess ? "Continue Shopping" : "Try Again"}
-          </Link>
-          {isSuccess && (
-            <Link
-              to="/orders"
-              className="px-8 py-3 bg-gray-200 text-gray-700 rounded-full font-semibold hover:bg-gray-300 transition-all"
-            >
-              View My Orders
-            </Link>
-          )}
-        </div>
-      </motion.div>
+  return (
+    <div className="payment-status-page payment-status-failed">
+      <h1>Payment failed</h1>
+      <p>
+        {errorMessage ||
+          "We couldn't confirm your eSewa payment. No charge was completed."}
+      </p>
+      <button onClick={handleRetry} disabled={isRetrying}>
+        {isRetrying ? "Redirecting to eSewa..." : "Try Again"}
+      </button>
     </div>
   );
 };

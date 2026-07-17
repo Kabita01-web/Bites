@@ -258,4 +258,5 @@ const CartItem = ({ item, onRemove, onUpdateQuantity, formatPrice }) => {
   );
 };
 
+// ✅ THIS IS THE IMPORTANT LINE - Make sure this exists!
 export default CartIcon;

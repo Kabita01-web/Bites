@@ -30,7 +30,8 @@ import OrderBoard from "./pages/dashboard/OrderBoard";
 import CartPage from "./pages/CartPage";
 import { CartProvider } from "./context/CartContext"; // ✅ CartProvider is here
 import Checkout from "./pages/Checkout";
-import PaymentStatus from "./pages/PaymentStatus";
+import PaymentSuccess from "./pages/PaymentSucess";
+import PaymentFailure from "./pages/PaymentFailure";
 
 // Scroll to top on route change
 const ScrollToTop = () => {
@@ -127,8 +128,8 @@ function App() {
               }
             />
             <Route path="/checkout" element={<Checkout />} />
-            <Route path="/payment-success" element={<PaymentStatus />} />
-            <Route path="/payment-failure" element={<PaymentStatus />} />
+            <Route path="/payment/success" element={<PaymentSuccess />} />
+            <Route path="/payment/failure" element={<PaymentFailure />} />
           </Routes>
         </main>
         <Footer />
