@@ -1,30 +1,40 @@
 import express from "express";
-import { protect } from "../middleware/authMiddleware.js";
+import rateLimit from "express-rate-limit";
 import {
-  initiateEsewa,
-  verifyEsewa,
-  initiateKhalti,
-  verifyKhalti,
-  processCashOnDelivery,
-  webhook,
-  getPaymentStatus, // ✅ This is now exported
+  initiateEsewaPayment,
+  handleEsewaSuccess,
+  handleEsewaFailure,
+  verifyEsewaPayment,
+  getPaymentStatus,
+  getAllPayments,
 } from "../controllers/paymentController.js";
+import { protect, isAdmin } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// Payment initiation
-router.post("/esewa/initiate", protect, initiateEsewa);
-router.post("/khalti/initiate", protect, initiateKhalti);
-router.post("/cash", protect, processCashOnDelivery);
+const paymentLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: "Too many payment requests from this IP, please try again later.",
+  },
+});
 
-// Payment verification
-router.post("/esewa/verify", protect, verifyEsewa);
-router.post("/khalti/verify", protect, verifyKhalti);
+router.post("/initiate-esewa", paymentLimiter, protect, initiateEsewaPayment);
 
-// Webhook (no auth - called by payment gateway)
-router.post("/webhook", webhook);
+// eSewa's redirect callbacks — public, GET requests with query params.
+// These cannot carry your normal auth token (the browser is being
+// redirected by eSewa's server, not by your frontend's authenticated
+// requests), so integrity relies entirely on signature + status-check
+// verification inside the handlers, not on the `protect` middleware.
+router.get("/esewa-success", handleEsewaSuccess);
+router.get("/esewa-failure", handleEsewaFailure);
 
-// Get payment status - requires authentication
-router.get("/status/:transactionId", protect, getPaymentStatus);
+router.get("/esewa-verify", protect, verifyEsewaPayment);
+router.get("/status/:orderId", protect, getPaymentStatus);
+router.get("/", protect, isAdmin, getAllPayments);
 
 export default router;
