@@ -1,6 +1,6 @@
 import React, { useEffect, useContext } from "react";
 import {
-  BrowserRouter as Router, // ✅ Router is here - this is fine
+  BrowserRouter as Router,
   Routes,
   Route,
   useLocation,
@@ -21,6 +21,7 @@ import UserManagement from "./pages/dashboard/UserManagement";
 import SystemStats from "./pages/dashboard/SystemStats";
 import MenuItemManagement from "./pages/dashboard/MenuItemManagement";
 import AdminReservations from "./pages/dashboard/AdminReservations";
+import PaymentTransactions from "./pages/dashboard/PaymentTransactions";
 import OrderBoard from "./pages/dashboard/OrderBoard";
 import { AuthContext } from "./context/AuthContext.jsx";
 import MenuDetails from "./pages/customer/MenuDetails";
@@ -43,98 +44,90 @@ const ScrollToTop = () => {
   return null;
 };
 
-const DashboardHome = () => {
+// Everything that needs access to useLocation() lives here,
+// since useLocation() only works INSIDE <Router>.
+function AppShell() {
   const { user } = useContext(AuthContext);
+  const location = useLocation();
 
-  if (!user) return null;
+  // Hide the public Navbar/Footer on any /dashboard/* route,
+  // since DashboardLayout renders its own header + sidebar.
+  const isDashboardRoute = location.pathname.startsWith("/dashboard");
 
-  switch (user.role) {
-    case "admin":
-      return <AdminDashboard />;
-    case "moderator":
-      return <ModeratorDashboard />;
-  }
-};
+  return (
+    <div className="flex flex-col min-h-screen">
+      {!isDashboardRoute && <Navbar />}
+
+      <main className="grow">
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<Home />} />
+          <Route path="/menu" element={<Menu />} />
+          <Route path="/menu/:id" element={<MenuDetails />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/reservation" element={<Reservation />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/cartpage" element={<CartPage />} />
+          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/payment/success" element={<PaymentSuccess />} />
+          <Route path="/payment/failure" element={<PaymentFailure />} />
+          <Route path="/payment/status" element={<PaymentStatus />} />
+
+          {/* Protected User Routes */}
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/edit-profile" element={<EditProfile />} />
+
+          {/* Dashboard Routes */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "moderator"]}>
+                <DashboardLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route
+              index
+              element={
+                user?.role === "admin" ? (
+                  <AdminDashboard />
+                ) : (
+                  <ModeratorDashboard />
+                )
+              }
+            />
+            <Route path="orders" element={<OrderBoard />} />
+            <Route path="users" element={<UserManagement />} />
+            <Route path="menu-items" element={<MenuItemManagement />} />
+            <Route path="reservations" element={<AdminReservations />} />
+            <Route path="payments" element={<PaymentTransactions />} />
+            <Route path="stats" element={<SystemStats />} />
+          </Route>
+
+          {/* 404 Page */}
+          <Route
+            path="*"
+            element={
+              <h1 className="text-center mt-20 text-3xl">
+                404 - Page Not Found
+              </h1>
+            }
+          />
+        </Routes>
+      </main>
+
+      {!isDashboardRoute && <Footer />}
+    </div>
+  );
+}
 
 function App() {
   return (
     <Router>
-      {" "}
-      {/* ✅ Only ONE Router in the entire app */}
       <ScrollToTop />
-      <div className="flex flex-col min-h-screen">
-        <Navbar />
-        <main className="grow">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/menu" element={<Menu />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/reservation" element={<Reservation />} />
-            <Route path="/menu/:id" element={<MenuDetails />} />{" "}
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/edit-profile" element={<EditProfile />} />
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute allowedRoles={["admin", "moderator"]}>
-                  <DashboardLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route index element={<DashboardHome />} />
-              <Route
-                path="users"
-                element={
-                  <ProtectedRoute allowedRoles={["admin", "moderator"]}>
-                    <UserManagement />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="stats"
-                element={
-                  <ProtectedRoute allowedRoles={["admin"]}>
-                    <SystemStats />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="menu-items"
-                element={
-                  <ProtectedRoute allowedRoles={["admin", "moderator"]}>
-                    <MenuItemManagement />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="reservations"
-                element={
-                  <ProtectedRoute allowedRoles={["admin"]}>
-                    <AdminReservations />
-                  </ProtectedRoute>
-                }
-              />
-            </Route>
-            <Route path="OrderBoard" element={<OrderBoard />} />
-            <Route path="/cartpage" element={<CartPage />} />
-            <Route
-              path="*"
-              element={
-                <h1 className="text-center mt-20 text-3xl">
-                  404 - Page Not Found
-                </h1>
-              }
-            />
-            <Route path="/checkout" element={<Checkout />} />
-            <Route path="/payment/success" element={<PaymentSuccess />} />
-            <Route path="/payment/failure" element={<PaymentFailure />} />
-          </Routes>
-        </main>
-        <Footer />
-      </div>
+      <AppShell />
     </Router>
   );
 }
