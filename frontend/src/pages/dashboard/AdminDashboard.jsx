@@ -1,132 +1,171 @@
-import { useState, useEffect } from "react";
-import { Calendar, Users, Clock, Loader2 } from "lucide-react";
+// frontend/src/pages/dashboard/AdminDashboard.jsx
+import React, { useState, useEffect } from "react";
 import {
+  ShoppingBag,
+  DollarSign,
+  Users,
+  UtensilsCrossed,
+  Clock,
+  TrendingUp,
+  CalendarCheck,
+} from "lucide-react";
+import {
+  getAllOrders,
+  getAllUsers,
+  getAllMenuItemsAdmin,
   getAllReservationsAdmin,
-  updateReservationStatusAdmin,
-} from "../../services/api"; // matches this file's import path, not the "../../api/api" I guessed earlier
+} from "../../services/api";
+// ❌ Removed: import DashboardLayout from "./DashboardLayout";
+// AdminDashboard renders INSIDE DashboardLayout's <Outlet />
+// (see App.jsx route nesting) — it should never wrap itself in
+// DashboardLayout again, or the sidebar/header render twice.
 
-const statusStyles = {
-  pending: "bg-amber-100 text-amber-700",
-  confirmed: "bg-green-100 text-green-700",
-  cancelled: "bg-red-100 text-red-700",
-};
-
-const AdminReservations = () => {
-  const [reservations, setReservations] = useState([]);
+const AdminDashboard = () => {
+  const [stats, setStats] = useState({
+    totalOrders: 0,
+    totalRevenue: 0,
+    totalUsers: 0,
+    totalMenuItems: 0,
+    pendingOrders: 0,
+    todayOrders: 0,
+    pendingReservations: 0,
+  });
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
 
   useEffect(() => {
-    const fetchReservations = async () => {
-      try {
-        const data = await getAllReservationsAdmin();
-        setReservations(data);
-      } catch {
-        setError(
-          "Could not load reservations. Ensure the backend server is running.",
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchReservations();
+    fetchDashboardData();
   }, []);
 
-  const handleStatusChange = async (id, newStatus) => {
+  const fetchDashboardData = async () => {
     try {
-      await updateReservationStatusAdmin(id, newStatus);
-      setReservations((prev) =>
-        prev.map((r) => (r._id === id ? { ...r, status: newStatus } : r)),
+      setLoading(true);
+
+      const [ordersRes, usersRes, menuRes, reservationsRes] = await Promise.all(
+        [
+          getAllOrders(),
+          getAllUsers(),
+          getAllMenuItemsAdmin(),
+          getAllReservationsAdmin(),
+        ],
       );
-    } catch {
-      setError("Failed to update reservation status.");
+
+      const orders = ordersRes.orders || [];
+      const users = usersRes.users || [];
+      const menuItems = menuRes.data || [];
+      const reservations = reservationsRes.reservations || [];
+
+      const totalRevenue = orders.reduce(
+        (sum, order) => sum + (order.total || 0),
+        0,
+      );
+      const pendingOrders = orders.filter((o) => o.status === "pending").length;
+      const todayOrders = orders.filter((o) => {
+        const today = new Date();
+        const orderDate = new Date(o.createdAt);
+        return orderDate.toDateString() === today.toDateString();
+      }).length;
+      const pendingReservations = reservations.filter(
+        (r) => r.status === "pending",
+      ).length;
+
+      setStats({
+        totalOrders: orders.length,
+        totalRevenue,
+        totalUsers: users.length,
+        totalMenuItems: menuItems.length,
+        pendingOrders,
+        todayOrders,
+        pendingReservations,
+      });
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
+  const StatCard = ({ title, value, icon: Icon, color }) => (
+    <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition">
+      <div className={`p-3 rounded-lg ${color} w-fit`}>
+        <Icon className="w-6 h-6 text-white" />
+      </div>
+      <h3 className="text-sm text-gray-500 mt-4">{title}</h3>
+      <p className="text-2xl font-bold text-gray-900">{value}</p>
+    </div>
+  );
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 text-primary animate-spin" />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[...Array(4)].map((_, i) => (
+          <div
+            key={i}
+            className="bg-white rounded-xl shadow-sm p-6 animate-pulse"
+          >
+            <div className="h-20 bg-gray-200 rounded"></div>
+          </div>
+        ))}
       </div>
     );
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="space-y-6">
+      {/* Header */}
       <div>
-        <h2 className="text-2xl font-serif font-bold text-gray-900">
-          Reservations
-        </h2>
-        <p className="text-gray-500 mt-1">
-          Manage upcoming and past table bookings.
+        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+        <p className="text-gray-500">
+          Welcome back! Here's what's happening with your restaurant.
         </p>
       </div>
 
-      {error && (
-        <div className="rounded-lg bg-amber-50 border border-amber-200 p-4">
-          <p className="text-sm text-amber-800">{error}</p>
-        </div>
-      )}
-
-      <div className="bg-white rounded-xl border border-gray-200">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-          <h3 className="font-semibold text-gray-900">All Reservations</h3>
-        </div>
-
-        {reservations.length > 0 ? (
-          <div className="divide-y divide-gray-50">
-            {reservations.map((r) => (
-              <div
-                key={r._id}
-                className="flex items-center gap-3 px-5 py-3 flex-wrap"
-              >
-                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-sm font-semibold text-gray-600">
-                  {r.user?.username?.[0]?.toUpperCase()}
-                </div>
-                <div className="flex-1 min-w-[160px]">
-                  <p className="text-sm font-medium text-gray-900 truncate">
-                    {r.user?.username}
-                  </p>
-                  <p className="text-xs text-gray-400 truncate">
-                    {r.user?.email}
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-1 text-xs text-gray-500">
-                  <Calendar size={14} />
-                  {new Date(r.date).toLocaleDateString()}
-                </div>
-                <div className="flex items-center gap-1 text-xs text-gray-500">
-                  <Clock size={14} />
-                  {r.time}
-                </div>
-                <div className="flex items-center gap-1 text-xs text-gray-500">
-                  <Users size={14} />
-                  {r.guests}
-                </div>
-
-                <select
-                  value={r.status}
-                  onChange={(e) => handleStatusChange(r._id, e.target.value)}
-                  className={`text-[11px] uppercase tracking-wider font-semibold px-2 py-1 rounded-full border-0 ${
-                    statusStyles[r.status] || "bg-gray-100 text-gray-600"
-                  }`}
-                >
-                  <option value="pending">Pending</option>
-                  <option value="confirmed">Confirmed</option>
-                  <option value="cancelled">Cancelled</option>
-                </select>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="px-5 py-8 text-center text-gray-400 text-sm">
-            {error ? "Unable to load reservations" : "No reservations found"}
-          </div>
-        )}
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard
+          title="Total Orders"
+          value={stats.totalOrders}
+          icon={ShoppingBag}
+          color="bg-blue-500"
+        />
+        <StatCard
+          title="Revenue"
+          value={`Rs. ${stats.totalRevenue.toLocaleString()}`}
+          icon={DollarSign}
+          color="bg-green-500"
+        />
+        <StatCard
+          title="Total Users"
+          value={stats.totalUsers}
+          icon={Users}
+          color="bg-purple-500"
+        />
+        <StatCard
+          title="Menu Items"
+          value={stats.totalMenuItems}
+          icon={UtensilsCrossed}
+          color="bg-orange-500"
+        />
+        <StatCard
+          title="Pending Orders"
+          value={stats.pendingOrders}
+          icon={Clock}
+          color="bg-yellow-500"
+        />
+        <StatCard
+          title="Today's Orders"
+          value={stats.todayOrders}
+          icon={TrendingUp}
+          color="bg-indigo-500"
+        />
+        <StatCard
+          title="Pending Reservations"
+          value={stats.pendingReservations}
+          icon={CalendarCheck}
+          color="bg-pink-500"
+        />
       </div>
     </div>
   );
 };
 
-export default AdminReservations;
+export default AdminDashboard;
