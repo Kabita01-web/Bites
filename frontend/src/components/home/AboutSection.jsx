@@ -1,5 +1,5 @@
 import React from "react";
-import { handleImageError } from "../utils/imageFallback";
+import { handleImageError } from "../../utils/imageFallback";
 
 const AboutSection = () => {
   return (

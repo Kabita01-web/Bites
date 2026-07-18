@@ -2,8 +2,8 @@ import React, { useState, useEffect } from "react";
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
-import MenuItem from "../components/MenuItem";
-import { getAllMenuItemsAdmin } from "../services/api";
+import MenuItem from "../../components/MenuItem";
+import { getAllMenuItemsAdmin } from "../../services/api";
 
 const Menu = () => {
   const [allDishes, setAllDishes] = useState([]);

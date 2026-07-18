@@ -1,8 +1,8 @@
 import React, { useState, useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { CartContext } from "../context/CartContext";
-import { AuthContext } from "../context/AuthContext";
-import { initiateEsewaPayment, createOrder } from "../services/api";
+import { CartContext } from "../../context/CartContext";
+import { AuthContext } from "../../context/AuthContext";
+import { initiateEsewaPayment, createOrder } from "../../services/api";
 
 const Checkout = () => {
   const navigate = useNavigate();

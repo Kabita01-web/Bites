@@ -5,9 +5,8 @@ import {
   getPaymentStatus,
   verifyEsewaPayment,
   initiateEsewaPayment,
-} from "../services/api";
-import { useCart } from "../context/CartContext";
-
+} from "../../services/api";
+import { useCart } from "../../context/CartContext";
 // -----------------------------------------------------------------------
 // How the user lands here:
 //   - Our backend's /api/payments/esewa-success handler already verified

@@ -5,33 +5,34 @@ import {
   Route,
   useLocation,
 } from "react-router-dom";
-import Navbar from "./components/Navbar";
-import Footer from "./components/Footer";
-import Home from "./pages/Home";
-import Menu from "./pages/Menu";
-import About from "./pages/About";
-import Contact from "./pages/Contact";
-import Reservation from "./pages/Reservation";
-import MenuDetails from "./pages/MenuDetails";
+// Update these imports
+import Home from "./pages/customer/Home";
+import Menu from "./pages/customer/Menu";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
-import Profile from "./pages/auth/Profile";
-import EditProfile from "./pages/auth/EditProfile";
-import { AuthContext } from "./context/AuthContext";
+import EditProfile from "./pages/user/Profile.jsx";
+import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
 import ProtectedRoute from "./components/ProtectedRoute";
 import DashboardLayout from "./pages/dashboard/DashboardLayout";
 import AdminDashboard from "./pages/dashboard/AdminDashboard";
 import ModeratorDashboard from "./pages/dashboard/ModeratorDashboard";
 import UserManagement from "./pages/dashboard/UserManagement";
 import SystemStats from "./pages/dashboard/SystemStats";
-import MenuItemManagement from "./pages/dashboard/MenuItemmanagement";
+import MenuItemManagement from "./pages/dashboard/MenuItemManagement";
 import AdminReservations from "./pages/dashboard/AdminReservations";
 import OrderBoard from "./pages/dashboard/OrderBoard";
-import CartPage from "./pages/CartPage";
-import { CartProvider } from "./context/CartContext"; // ✅ CartProvider is here
-import Checkout from "./pages/Checkout";
-import PaymentSuccess from "./pages/PaymentSucess";
-import PaymentFailure from "./pages/PaymentFailure";
+import { AuthContext } from "./context/AuthContext.jsx";
+import MenuDetails from "./pages/customer/MenuDetails";
+import CartPage from "./pages/customer/CartPage";
+import Checkout from "./pages/customer/Checkout";
+import PaymentSuccess from "./pages/customer/PaymentSucess.jsx";
+import PaymentFailure from "./pages/customer/PaymentFailure";
+import PaymentStatus from "./pages/customer/PaymentStatus";
+import About from "./pages/info/About";
+import Contact from "./pages/info/Contact";
+import Reservation from "./pages/info/Reservation";
+import Profile from "./pages/user/Profile";
 
 // Scroll to top on route change
 const ScrollToTop = () => {

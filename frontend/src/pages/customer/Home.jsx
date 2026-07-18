@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
-import Hero from "../components/Hero";
-import FeaturedDishes from "../components/home/FeaturedDishes";
-import FeaturesSection from "../components/home/FeaturesSection";
-import TestimonialsSection from "../components/home/TestimonialsSection";
-import ReservationCTA from "../components/home/ReservationCTA";
-import { getMenuItems } from "../services/api";
+import Hero from "../../components/Hero";
+import FeaturedDishes from "../../components/home/FeaturedDishes";
+import FeaturesSection from "../../components/home/FeaturesSection";
+import TestimonialsSection from "../../components/home/TestimonialsSection";
+import ReservationCTA from "../../components/home/ReservationCTA";
+import { getMenuItems } from "../../services/api";
 
 // Dish names to spotlight on the homepage.
 // Edit this list any time — it just needs to match `name` values in menu.json.

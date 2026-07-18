@@ -1,8 +1,8 @@
 import React, { useState, useContext } from "react";
 import { Calendar, Users, Clock, Utensils, CheckCircle2 } from "lucide-react";
-import { AuthContext } from "../context/AuthContext";
+import { AuthContext } from "../../context/AuthContext";
 import { Navigate, Link } from "react-router-dom";
-import { createReservation } from "../services/api"; // adjust path to match this file's actual location/name
+import { createReservation } from "../../services/api"; // adjust path to match this file's actual location/name
 
 const Reservation = () => {
   const [submitted, setSubmitted] = useState(false);

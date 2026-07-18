@@ -2,8 +2,8 @@ import React, { useState, useEffect, useContext } from "react";
 // eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { getMenuItemByIdAdmin, getAllMenuItemsAdmin } from "../services/api";
-import { CartContext } from "../context/CartContext"; // This now works
+import { getMenuItemByIdAdmin, getAllMenuItemsAdmin } from "../../services/api";
+import { CartContext } from "../../context/CartContext"; // This now works
 
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=1200";
