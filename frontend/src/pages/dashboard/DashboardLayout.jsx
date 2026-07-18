@@ -11,6 +11,7 @@ import {
   ChevronDown,
   UtensilsCrossed,
   CalendarCheck,
+  CreditCard,
 } from "lucide-react";
 import { AuthContext } from "../../context/AuthContext";
 
@@ -37,6 +38,12 @@ const navItems = [
     label: "Reservations",
     path: "/dashboard/reservations",
     icon: CalendarCheck,
+    roles: ["admin"],
+  },
+  {
+    label: "Payments",
+    path: "/dashboard/payments",
+    icon: CreditCard,
     roles: ["admin"],
   },
   {
