@@ -171,6 +171,32 @@ export const handleEsewaSuccess = async (req, res) => {
         order.esewaResponseData = decodedData;
         await order.save();
 
+        // Create the Payment record — required fields per schema:
+        // order, user, esewaProductCode, esewaMerchantOrderId, esewaAmount, amount
+        try {
+          await Payment.create({
+            order: order._id,
+            user: order.user,
+            esewaProductCode: process.env.ESEWA_PRODUCT_CODE || "EPAYTEST",
+            esewaMerchantOrderId: order.esewaMerchantOrderId,
+            esewaTransactionId: order.esewaTransactionId,
+            esewaReferenceId: order.esewaReferenceId,
+            esewaAmount: order.total,
+            esewaStatus: verificationResponse.data.status,
+            esewaPaymentDate: new Date(),
+            status: "succeeded",
+            amount: order.total,
+            currency: "NPR",
+          });
+        } catch (paymentLogErr) {
+          // Don't let a logging failure block the user's success redirect —
+          // the order itself is already correctly marked as paid.
+          console.error(
+            "⚠️ Order paid but failed to create Payment record:",
+            paymentLogErr,
+          );
+        }
+
         // Clear cart
         await Cart.findOneAndDelete({ user: order.user });
 
@@ -185,6 +211,23 @@ export const handleEsewaSuccess = async (req, res) => {
         order.paymentStatus = "failed";
         await order.save();
 
+        try {
+          await Payment.create({
+            order: order._id,
+            user: order.user,
+            esewaProductCode: process.env.ESEWA_PRODUCT_CODE || "EPAYTEST",
+            esewaMerchantOrderId: order.esewaMerchantOrderId,
+            esewaStatus: verificationResponse.data.status,
+            esewaAmount: order.total,
+            status: "failed",
+            amount: order.total,
+            currency: "NPR",
+            failureReason: `eSewa verification returned status: ${verificationResponse.data.status}`,
+          });
+        } catch (paymentLogErr) {
+          console.error("⚠️ Failed to log failed payment:", paymentLogErr);
+        }
+
         console.log(
           "❌ Verification failed:",
           verificationResponse.data.status,
@@ -197,6 +240,23 @@ export const handleEsewaSuccess = async (req, res) => {
       console.error("❌ Verification API error:", error);
       order.paymentStatus = "failed";
       await order.save();
+
+      try {
+        await Payment.create({
+          order: order._id,
+          user: order.user,
+          esewaProductCode: process.env.ESEWA_PRODUCT_CODE || "EPAYTEST",
+          esewaMerchantOrderId: order.esewaMerchantOrderId,
+          esewaAmount: order.total,
+          status: "failed",
+          amount: order.total,
+          currency: "NPR",
+          failureReason: "eSewa verification API error",
+        });
+      } catch (paymentLogErr) {
+        console.error("⚠️ Failed to log failed payment:", paymentLogErr);
+      }
+
       return res.redirect(
         `${process.env.PAYMENT_FAILURE_REDIRECT || "http://localhost:5173/payment/failure"}?orderId=${order._id}&error=verification_error`,
       );
@@ -237,6 +297,25 @@ export const handleEsewaFailure = async (req, res) => {
           await order.save();
           orderId = order._id;
           console.log("❌ Order marked as failed:", orderId);
+
+          // Log the failed/cancelled attempt too, so it shows up in the
+          // admin Payment Transactions list instead of vanishing silently.
+          try {
+            await Payment.create({
+              order: order._id,
+              user: order.user,
+              esewaProductCode: process.env.ESEWA_PRODUCT_CODE || "EPAYTEST",
+              esewaMerchantOrderId: order.esewaMerchantOrderId,
+              esewaStatus: decodedData.status || "CANCELED",
+              esewaAmount: order.total,
+              status: "failed",
+              amount: order.total,
+              currency: "NPR",
+              failureReason: "eSewa payment failed or was cancelled",
+            });
+          } catch (paymentLogErr) {
+            console.error("⚠️ Failed to log failed payment:", paymentLogErr);
+          }
         }
       } catch (error) {
         console.error("❌ Failed to decode failure data:", error);
