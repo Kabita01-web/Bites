@@ -94,7 +94,7 @@ export const deleteUser = async (userId) => {
 };
 
 export const getSystemStats = async () => {
-  const response = await instance.get("/users/stats");
+  const response = await instance.get("/stats/system");
   return response.data;
 };
 
