@@ -13,6 +13,7 @@ import reservationRoutes from "./routes/reservationRoutes.js";
 import cartRoutes from "./routes/cartRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
+import statsRoute from "./routes/statsRoute.js";
 
 dotenv.config();
 
@@ -38,6 +39,7 @@ app.use("/api/reservations", reservationRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/stats", statsRoute);
 
 // Health check
 app.get("/", (req, res) => {
