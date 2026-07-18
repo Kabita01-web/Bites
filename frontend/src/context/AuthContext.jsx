@@ -1,4 +1,5 @@
-import React, { createContext, useState, useEffect } from "react";
+// frontend/src/context/AuthContext.jsx
+import React, { createContext, useState, useEffect, useContext } from "react";
 import {
   loginUser,
   registerUser,
@@ -8,14 +9,23 @@ import {
 
 export const AuthContext = createContext();
 
+// ✅ Add this custom hook
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
+};
+
+const normalizeUser = (userData) => ({
+  ...userData,
+  role: userData?.role || "user",
+});
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-
-  const normalizeUser = (userData) => ({
-    ...userData,
-    role: userData?.role || "user",
-  });
 
   // Check if user is already logged in on app load
   useEffect(() => {
@@ -65,3 +75,6 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
+
+// ✅ Also export the context itself (optional, for backward compatibility)
+export default AuthContext;
