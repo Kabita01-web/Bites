@@ -10,6 +10,7 @@ import {
   ChevronDown,
   LayoutDashboard,
   CalendarCheck,
+  Package, // ✅ Add this for My Orders icon
 } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
 import { AuthContext } from "../context/AuthContext";
@@ -215,6 +216,17 @@ const Navbar = () => {
                           {user.username}
                         </p>
                       </div>
+
+                      {/* ✅ My Orders - Desktop */}
+                      <Link
+                        to="/my-orders"
+                        onClick={() => setIsProfileOpen(false)}
+                        className="dropdown-item"
+                      >
+                        <Package size={15} className="text-gray-400" />
+                        My Orders
+                      </Link>
+
                       <Link
                         to="/profile"
                         onClick={() => setIsProfileOpen(false)}
@@ -223,6 +235,7 @@ const Navbar = () => {
                         <User size={15} className="text-gray-400" />
                         My Profile
                       </Link>
+
                       {user?.role !== "user" && (
                         <Link
                           to="/dashboard"
@@ -367,6 +380,16 @@ const Navbar = () => {
                       </div>
                     </div>
 
+                    {/* ✅ My Orders - Mobile */}
+                    <Link
+                      to="/my-orders"
+                      onClick={() => setIsOpen(false)}
+                      className="flex items-center gap-3 px-3 py-3 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors text-sm font-medium"
+                    >
+                      <Package size={16} className="text-gray-400" />
+                      My Orders
+                    </Link>
+
                     <Link
                       to="/profile"
                       onClick={() => setIsOpen(false)}
@@ -374,13 +397,14 @@ const Navbar = () => {
                     >
                       <User size={16} className="text-gray-400" /> My Profile
                     </Link>
+
                     {user?.role !== "user" && (
                       <Link
                         to="/dashboard"
                         onClick={() => setIsOpen(false)}
                         className="flex items-center gap-3 px-3 py-3 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors text-sm font-medium"
                       >
-                        <LayoutDashboard size={16} className="text-gray-400" />{" "}
+                        <LayoutDashboard size={16} className="text-gray-400" />
                         Dashboard
                       </Link>
                     )}
