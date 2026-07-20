@@ -1,35 +1,36 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
+import { MapPin, Phone, Clock } from "lucide-react";
 
 const About = () => {
   const chefs = [
     {
-      name: "Marco Rossi",
+      name: "Prakash Gurung",
       role: "Executive Chef",
       experience: "15+ years",
-      specialty: "Italian Cuisine",
+      specialty: "Nepali & Thakali Cuisine",
       photo:
         "https://images.pexels.com/photos/8298449/pexels-photo-8298449.jpeg?_gl=1*gfyatg*_ga*NjkzNTk1ODk0LjE3NTg1MTYxNTI.*_ga_8JE65Q40S6*czE3Nzc3ODY3MDQkbzckZzEkdDE3Nzc3ODY5NzQkajUwJGwwJGgw",
-      quote: "Food is art, and the plate is my canvas.",
+      quote: "Food is our way of welcoming guests like family.",
     },
     {
-      name: "Sarah Jenkins",
+      name: "Sarita Thapa",
       role: "Sous Chef",
       experience: "10+ years",
-      specialty: "Seafood & Fusion",
+      specialty: "Newari & Mountain Cuisine",
       photo:
         "https://images.pexels.com/photos/30004318/pexels-photo-30004318.jpeg?_gl=1*1ojuidp*_ga*NjkzNTk1ODk0LjE3NTg1MTYxNTI.*_ga_8JE65Q40S6*czE3Nzc3ODY3MDQkbzckZzEkdDE3Nzc3ODY4NTMkajQ5JGwwJGgw",
-      quote: "Every dish tells a story of passion and precision.",
+      quote: "Every dish tells a story of the hills we grew up in.",
     },
     {
-      name: "David Chen",
+      name: "Dawa Sherpa",
       role: "Pastry Chef",
       experience: "12+ years",
-      specialty: "French Pastries",
+      specialty: "Local & Fusion Desserts",
       photo:
         "https://images.pexels.com/photos/8278883/pexels-photo-8278883.jpeg?_gl=1*9lsvbl*_ga*NjkzNTk1ODk0LjE3NTg1MTYxNTI.*_ga_8JE65Q40S6*czE3Nzc3ODY3MDQkbzckZzEkdDE3Nzc3ODY5MTIkajUwJGwwJGgw",
-      quote: "Dessert is the perfect ending to a beautiful meal.",
+      quote: "A good meal in Pokhara should end on a sweet note.",
     },
   ];
 
@@ -37,35 +38,35 @@ const About = () => {
     {
       year: "2015",
       title: "Bites Founded",
-      description: "Opened our first location in downtown",
+      description: "Opened our first kitchen in Pokhara",
       image:
         "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&q=80&w=600",
     },
     {
       year: "2017",
-      title: "First Award",
-      description: "Best New Restaurant - City Guide",
+      title: "First Recognition",
+      description: "Best New Restaurant — Pokhara Dining Guide",
       image:
         "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&q=80&w=600",
     },
     {
       year: "2019",
-      title: "Michelin Bib",
-      description: "Recognized for quality & value",
+      title: "Local Favorite",
+      description: "Recognized for consistency & value by regular guests",
       image:
         "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=600",
     },
     {
       year: "2022",
-      title: "New Location",
-      description: "Expanded to serve more food lovers",
+      title: "Chauthe Location",
+      description: "Moved to our current home in Chauthe-14, Pokhara",
       image:
         "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80&w=600",
     },
     {
       year: "2024",
-      title: "Sustainability",
-      description: "100% locally sourced ingredients",
+      title: "Locally Sourced",
+      description: "100% ingredients sourced from Kaski valley farms",
       image:
         "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=600",
     },
@@ -76,7 +77,7 @@ const About = () => {
       icon: "🌱",
       title: "Quality Ingredients",
       description:
-        "We source only the finest, freshest ingredients from local farms and trusted suppliers.",
+        "We source fresh produce, meat, and dairy from local farms around the Pokhara valley.",
       image:
         "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=600",
     },
@@ -84,15 +85,15 @@ const About = () => {
       icon: "🔥",
       title: "Passionate Craftsmanship",
       description:
-        "Every dish is prepared with dedication, creativity, and an eye for perfection.",
+        "Every dish is prepared with care, tradition, and attention to detail.",
       image:
         "https://images.unsplash.com/photo-1581299894007-aaa50297cf16?auto=format&fit=crop&q=80&w=600",
     },
     {
       icon: "🤝",
-      title: "Exceptional Service",
+      title: "Atithi Deva Bhava",
       description:
-        "We treat every guest like family, ensuring a warm and memorable experience.",
+        "We treat every guest as we would a guest in our own home — with warmth and respect.",
       image:
         "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&q=80&w=600",
     },
@@ -102,20 +103,12 @@ const About = () => {
     <div className="pt-28 bg-white overflow-hidden">
       {/* Hero Section */}
       <section className="relative h-[60vh] min-h-[450px] flex items-center justify-center overflow-hidden">
-        {/* Full-bleed background image */}
         <img
           src="https://images.unsplash.com/photo-1550966842-28df05094254?auto=format&fit=crop&q=80&w=1600"
           alt="Restaurant ambiance"
           className="absolute inset-0 w-full h-full object-cover"
         />
-        {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/80 to-accent/70"></div>
-
-        {/* Decorative blur blobs */}
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-white rounded-full blur-3xl"></div>
-          <div className="absolute bottom-20 right-10 w-96 h-96 bg-white rounded-full blur-3xl"></div>
-        </div>
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/85 to-accent/75"></div>
 
         <div className="container mx-auto px-4 text-center relative z-10">
           <motion.div
@@ -130,7 +123,8 @@ const About = () => {
               About Bites
             </h1>
             <p className="text-white/90 mt-4 max-w-2xl mx-auto text-lg">
-              Where passion meets flavor, and every meal becomes a memory
+              Authentic flavors of Nepal, served with warmth in the heart of
+              Pokhara
             </p>
           </motion.div>
         </div>
@@ -155,10 +149,8 @@ const About = () => {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
               </div>
-              {/* Decorative border */}
               <div className="absolute top-5 -left-5 w-full h-full border-2 border-accent rounded-3xl -z-10 hidden lg:block"></div>
 
-              {/* Experience badge */}
               <div className="absolute -bottom-5 -right-5 bg-white rounded-2xl shadow-xl p-4 hidden lg:block">
                 <div className="text-center">
                   <span className="text-3xl font-bold text-accent">10+</span>
@@ -182,37 +174,40 @@ const About = () => {
                 Founded in 2015
               </span>
               <h2 className="text-4xl md:text-5xl font-serif font-bold text-gray-800 leading-tight">
-                A Journey of Passion and{" "}
-                <span className="text-accent italic">Authentic Taste</span>
+                Rooted in Pokhara,{" "}
+                <span className="text-accent italic">Served with Heart</span>
               </h2>
               <p className="text-lg text-gray-600 leading-relaxed">
-                Bites began with a simple dream: to bring people together
-                through the universal language of gourmet food. What started as
-                a small family kitchen has evolved into one of the city's most
-                beloved dining destinations.
+                Bites began with a simple dream: to bring people together over
+                good food, in the same spirit of hospitality that Nepal is known
+                for. What started as a small family kitchen has grown into one
+                of Pokhara's most loved dining spots, now home in Chauthe-14.
               </p>
               <div className="bg-gradient-to-r from-secondary/30 to-transparent p-6 rounded-2xl border-l-4 border-accent">
                 <p className="text-gray-700 italic text-lg">
-                  "We don't just cook; we compose stories on a plate. Every
-                  ingredient is chosen for its character, and every dish is a
-                  chapter of our culinary heritage."
+                  "We don't just cook; we welcome every guest the way we'd
+                  welcome them into our own home. Every ingredient is chosen
+                  with care, and every dish carries a piece of our culture."
                 </p>
-                <p className="text-accent font-semibold mt-3">— Marco Rossi</p>
+                <p className="text-accent font-semibold mt-3">
+                  — Prakash Gurung
+                </p>
               </div>
 
-              {/* Stats */}
               <div className="grid grid-cols-3 gap-4 pt-4">
                 <div className="text-center">
                   <div className="text-3xl font-bold text-primary">500+</div>
                   <div className="text-gray-500 text-sm">Happy Customers</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-primary">50+</div>
-                  <div className="text-gray-500 text-sm">Awards Won</div>
+                  <div className="text-3xl font-bold text-primary">10+</div>
+                  <div className="text-gray-500 text-sm">
+                    Years Serving Pokhara
+                  </div>
                 </div>
                 <div className="text-center">
                   <div className="text-3xl font-bold text-primary">25+</div>
-                  <div className="text-gray-500 text-sm">Chef Team</div>
+                  <div className="text-gray-500 text-sm">Team Members</div>
                 </div>
               </div>
             </motion.div>
@@ -220,7 +215,7 @@ const About = () => {
         </div>
       </section>
 
-      {/* Milestones Timeline — FIXED: alternate sides now work correctly */}
+      {/* Milestones Timeline */}
       <section className="py-20 bg-secondary/20">
         <div className="container mx-auto px-4 md:px-6 text-center mb-16">
           <span className="text-accent font-bold tracking-widest uppercase text-sm">
@@ -232,7 +227,6 @@ const About = () => {
         </div>
         <div className="container mx-auto px-4 md:px-6">
           <div className="relative">
-            {/* Timeline center line */}
             <div className="absolute left-1/2 transform -translate-x-1/2 w-0.5 h-full bg-accent/30 hidden md:block"></div>
 
             <div className="space-y-12">
@@ -247,10 +241,8 @@ const About = () => {
                     transition={{ delay: index * 0.1 }}
                     className="relative flex flex-col md:flex-row items-center gap-0"
                   >
-                    {/* Timeline dot */}
                     <div className="absolute left-1/2 transform -translate-x-1/2 w-4 h-4 bg-accent rounded-full z-10 hidden md:block ring-4 ring-white"></div>
 
-                    {/* Left side */}
                     <div className="md:w-1/2 md:pr-12 flex justify-end">
                       {isEven ? (
                         <div className="bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-shadow w-full md:max-w-sm">
@@ -276,7 +268,6 @@ const About = () => {
                       )}
                     </div>
 
-                    {/* Right side */}
                     <div className="md:w-1/2 md:pl-12 flex justify-start">
                       {!isEven ? (
                         <div className="bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-shadow w-full md:max-w-sm">
@@ -301,7 +292,6 @@ const About = () => {
                         <div className="hidden md:block" />
                       )}
 
-                      {/* Mobile: always show below */}
                       <div className="md:hidden bg-white p-6 rounded-2xl shadow-lg w-full">
                         <div className="overflow-hidden rounded-xl mb-4">
                           <img
@@ -361,31 +351,10 @@ const About = () => {
                     alt={chef.name}
                     className="w-full h-96 object-cover transition-transform duration-700 group-hover:scale-110"
                   />
-                  {/* Overlay with quote & socials */}
                   <div className="absolute inset-0 bg-gradient-to-t from-primary/90 via-primary/40 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col items-center justify-end p-6">
                     <p className="text-white text-center text-sm italic mb-4">
                       "{chef.quote}"
                     </p>
-                    <div className="flex gap-3">
-                      <button className="bg-white/20 backdrop-blur-sm p-2 rounded-full hover:bg-white/30 transition">
-                        <svg
-                          className="w-5 h-5 text-white"
-                          fill="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" />
-                        </svg>
-                      </button>
-                      <button className="bg-white/20 backdrop-blur-sm p-2 rounded-full hover:bg-white/30 transition">
-                        <svg
-                          className="w-5 h-5 text-white"
-                          fill="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.85 0 3.205-.012 3.585-.069 4.85-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.85-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.85 0-3.204.012-3.584.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.85-.069z" />
-                        </svg>
-                      </button>
-                    </div>
                   </div>
                 </div>
                 <h3 className="text-2xl font-serif font-bold text-gray-800 mb-1">
@@ -405,7 +374,7 @@ const About = () => {
         </div>
       </section>
 
-      {/* Values Section — now with images */}
+      {/* Values Section */}
       <section className="py-20 bg-secondary/30">
         <div className="container mx-auto px-4 md:px-6 text-center mb-12">
           <span className="text-accent font-bold tracking-widest uppercase text-sm">
@@ -446,9 +415,53 @@ const About = () => {
         </div>
       </section>
 
+      {/* Visit Us */}
+      <section className="py-20">
+        <div className="container mx-auto px-4 md:px-6">
+          <div className="text-center mb-12">
+            <span className="text-accent font-bold tracking-widest uppercase text-sm">
+              Find Us
+            </span>
+            <h2 className="text-4xl md:text-5xl font-serif font-bold text-gray-800 mt-4">
+              Visit Us in Pokhara
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto">
+            <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-8 text-center">
+              <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto mb-4">
+                <MapPin size={22} />
+              </div>
+              <h3 className="font-semibold text-gray-800 mb-1">Location</h3>
+              <p className="text-gray-500 text-sm">Chauthe-14, Pokhara</p>
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-8 text-center">
+              <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto mb-4">
+                <Phone size={22} />
+              </div>
+              <h3 className="font-semibold text-gray-800 mb-1">Phone</h3>
+              <a
+                href="tel:+9779745622342"
+                className="text-gray-500 text-sm hover:text-primary transition-colors"
+              >
+                9745622342
+              </a>
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-8 text-center">
+              <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto mb-4">
+                <Clock size={22} />
+              </div>
+              <h3 className="font-semibold text-gray-800 mb-1">Hours</h3>
+              <p className="text-gray-500 text-sm">Open daily, 11 AM – 9 PM</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="relative py-28 overflow-hidden">
-        {/* Background image */}
         <img
           src="https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&q=80&w=1600"
           alt="Restaurant ambiance"
@@ -467,8 +480,8 @@ const About = () => {
               Experience the Bites Difference
             </h2>
             <p className="text-white/90 text-lg mb-8">
-              Join us for an unforgettable dining journey. Reserve your table
-              today and discover why our guests keep coming back.
+              Join us for an unforgettable dining journey in Chauthe-14,
+              Pokhara. Reserve your table today.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
@@ -483,6 +496,13 @@ const About = () => {
               >
                 View Our Menu
               </Link>
+              <a
+                href="tel:+9779745622342"
+                className="flex items-center justify-center gap-2 bg-transparent border-2 border-white text-white px-8 py-3 rounded-full font-semibold hover:bg-white hover:text-primary transition-all duration-300"
+              >
+                <Phone size={18} />
+                9745622342
+              </a>
             </div>
           </motion.div>
         </div>
