@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from "react";
+import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { CartContext } from "../../context/CartContext";
 import { AuthContext } from "../../context/AuthContext";
@@ -152,7 +152,7 @@ const Checkout = () => {
                     name="fullName"
                     value={deliveryAddress.fullName}
                     onChange={handleAddressChange}
-                    className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                     required
                   />
                 </div>
@@ -165,7 +165,7 @@ const Checkout = () => {
                     name="phone"
                     value={deliveryAddress.phone}
                     onChange={handleAddressChange}
-                    className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                     required
                   />
                 </div>
@@ -178,7 +178,7 @@ const Checkout = () => {
                     name="street"
                     value={deliveryAddress.street}
                     onChange={handleAddressChange}
-                    className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                     required
                   />
                 </div>
@@ -191,7 +191,7 @@ const Checkout = () => {
                     name="city"
                     value={deliveryAddress.city}
                     onChange={handleAddressChange}
-                    className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                     required
                   />
                 </div>
@@ -204,7 +204,7 @@ const Checkout = () => {
                     name="landmark"
                     value={deliveryAddress.landmark}
                     onChange={handleAddressChange}
-                    className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
               </div>
@@ -219,7 +219,7 @@ const Checkout = () => {
                       value="esewa"
                       checked={paymentMethod === "esewa"}
                       onChange={(e) => setPaymentMethod(e.target.value)}
-                      className="w-4 h-4 text-orange-500"
+                      className="w-4 h-4 text-primary"
                     />
                     <span>eSewa (Online Payment)</span>
                   </label>
@@ -229,7 +229,7 @@ const Checkout = () => {
                       value="cod"
                       checked={paymentMethod === "cod"}
                       onChange={(e) => setPaymentMethod(e.target.value)}
-                      className="w-4 h-4 text-orange-500"
+                      className="w-4 h-4 text-primary"
                     />
                     <span>Cash on Delivery</span>
                   </label>
@@ -245,7 +245,7 @@ const Checkout = () => {
               <button
                 type="submit"
                 disabled={loading || !hasCartItems}
-                className="w-full mt-6 bg-orange-500 text-white py-3 rounded-lg font-semibold hover:bg-orange-600 transition disabled:opacity-50"
+                className="w-full mt-6 bg-primary text-white py-3 rounded-lg font-semibold hover:bg-primary/90 transition disabled:opacity-50"
               >
                 {loading ? "Processing..." : `Pay NPR ${total.toFixed(2)}`}
               </button>
