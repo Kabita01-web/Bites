@@ -55,7 +55,7 @@ const PaymentFailure = () => {
         <div className="space-y-3">
           <button
             onClick={handleRetry}
-            className="flex items-center justify-center gap-2 w-full bg-orange-500 text-white py-3 rounded-xl font-semibold hover:bg-orange-600 transition"
+            className="flex items-center justify-center gap-2 w-full bg-primary text-white py-3 rounded-xl font-semibold hover:bg-primary/90 transition"
           >
             <RefreshCw size={20} />
             Retry Payment

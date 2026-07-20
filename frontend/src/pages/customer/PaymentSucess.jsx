@@ -54,7 +54,7 @@ const PaymentSuccess = () => {
         <div className="space-y-3">
           <Link
             to="/orders"
-            className="flex items-center justify-center gap-2 w-full bg-orange-500 text-white py-3 rounded-xl font-semibold hover:bg-orange-600 transition"
+            className="flex items-center justify-center gap-2 w-full bg-primary text-white py-3 rounded-xl font-semibold hover:bg-primary/90 transition"
           >
             <Package size={20} />
             View My Orders
