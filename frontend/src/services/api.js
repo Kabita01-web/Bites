@@ -214,12 +214,13 @@ export const getOrderById = async (orderId) => {
 };
 
 export const getAllOrders = async () => {
-  const response = await instance.get("/orders");
+  const response = await instance.get("/orders/admin/all");
   return response.data;
 };
 
-export const updateOrderStatus = async (orderId, status) => {
-  const response = await instance.put(`/orders/${orderId}/status`, { status });
+// ✅ Update order status
+export const updateOrderStatus = async (orderId, data) => {
+  const response = await instance.put(`/orders/${orderId}/status`, data);
   return response.data;
 };
 
@@ -273,6 +274,20 @@ export const refundPayment = async (paymentId) => {
   return response.data;
 };
 
+export const getMyOrders = async () => {
+  try {
+    const response = await instance.get("/orders/my");
+    console.log("📦 API response:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("❌ API error:", error);
+    return { success: false, orders: [] };
+  }
+};
+export const getOrderDetails = async (orderId) => {
+  const response = await instance.get(`/orders/${orderId}`);
+  return response.data;
+};
 // ---------------------------------------------------------------------------
 // 9) Export the raw instance for custom requests
 // ---------------------------------------------------------------------------
