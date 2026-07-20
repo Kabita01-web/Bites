@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
-// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
-import MenuItem from "../../components/MenuItem";
 import { getAllMenuItemsAdmin } from "../../services/api";
+import { useCart } from "../../context/CartContext";
+import { Filter, Sliders, X } from "lucide-react";
 
 const Menu = () => {
   const [allDishes, setAllDishes] = useState([]);
@@ -11,6 +11,13 @@ const Menu = () => {
   const [error, setError] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
+  const { addItem } = useCart();
+
+  // Filter state
+  const [showFilters, setShowFilters] = useState(false);
+  const [sortBy, setSortBy] = useState("default");
+  const [priceRange, setPriceRange] = useState({ min: 0, max: 1000 });
+  const [tempPriceRange, setTempPriceRange] = useState({ min: 0, max: 1000 });
 
   useEffect(() => {
     const fetchMenu = async () => {
@@ -27,9 +34,15 @@ const Menu = () => {
             .map((item) => ({
               ...item,
               _id: item._id || item.id,
+              image: item.imageUrl || "https://placehold.co/300x200?text=Food",
             }));
 
           setAllDishes(backendData);
+          const maxPrice = Math.max(
+            ...backendData.map((item) => item.price || 0),
+          );
+          setPriceRange({ min: 0, max: maxPrice || 1000 });
+          setTempPriceRange({ min: 0, max: maxPrice || 1000 });
         } else {
           setAllDishes([]);
           setError("No menu items available");
@@ -46,7 +59,6 @@ const Menu = () => {
     fetchMenu();
   }, []);
 
-  // Build category list dynamically from the data itself
   const categories = [
     "All",
     ...Array.from(
@@ -54,27 +66,83 @@ const Menu = () => {
     ),
   ];
 
+  const maxDishPrice =
+    Math.max(...allDishes.map((item) => item.price || 0)) || 1000;
+
   const getCurrentItems = () => {
-    if (activeCategory === "All") return allDishes;
-    return allDishes.filter((item) => item.category === activeCategory);
+    let items = allDishes;
+
+    if (activeCategory !== "All") {
+      items = items.filter((item) => item.category === activeCategory);
+    }
+
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      items = items.filter(
+        (item) =>
+          item.name?.toLowerCase().includes(term) ||
+          item.description?.toLowerCase().includes(term) ||
+          item.category?.toLowerCase().includes(term),
+      );
+    }
+
+    items = items.filter(
+      (item) =>
+        (item.price || 0) >= priceRange.min &&
+        (item.price || 0) <= priceRange.max,
+    );
+
+    items = [...items];
+    switch (sortBy) {
+      case "price-low":
+        items.sort((a, b) => (a.price || 0) - (b.price || 0));
+        break;
+      case "price-high":
+        items.sort((a, b) => (b.price || 0) - (a.price || 0));
+        break;
+      case "name":
+        items.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+        break;
+      default:
+        break;
+    }
+
+    return items;
   };
 
-  let currentItems = getCurrentItems();
+  const currentItems = getCurrentItems();
 
-  if (searchTerm) {
-    const term = searchTerm.toLowerCase();
-    currentItems = currentItems.filter(
-      (item) =>
-        item.name?.toLowerCase().includes(term) ||
-        item.description?.toLowerCase().includes(term) ||
-        item.ingredients?.toLowerCase().includes(term) ||
-        item.category?.toLowerCase().includes(term),
-    );
-  }
+  const hasActiveFilters =
+    priceRange.min > 0 || priceRange.max < maxDishPrice || sortBy !== "default";
+
+  const activeFilterCount = [
+    priceRange.min > 0 || priceRange.max < maxDishPrice ? 1 : 0,
+    sortBy !== "default" ? 1 : 0,
+  ].reduce((a, b) => a + b, 0);
+
+  const applyFilters = () => {
+    setPriceRange(tempPriceRange);
+    setShowFilters(false);
+  };
+
+  const resetFilters = () => {
+    setPriceRange({ min: 0, max: maxDishPrice });
+    setTempPriceRange({ min: 0, max: maxDishPrice });
+    setSortBy("default");
+  };
+
+  const handleAddToCart = async (dish, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const ok = await addItem(dish._id, 1);
+    if (!ok) {
+      console.error("Failed to add", dish.name, "to cart");
+    }
+  };
 
   if (loading) {
     return (
-      <div className="pt-28 pb-32 bg-gray-50 min-h-screen flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-primary border-t-transparent"></div>
           <p className="text-gray-500 mt-4 font-medium">
@@ -87,7 +155,7 @@ const Menu = () => {
 
   if (error) {
     return (
-      <div className="pt-28 pb-32 bg-gray-50 min-h-screen flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center max-w-md mx-auto px-4">
           <svg
             className="w-20 h-20 text-red-400 mx-auto mb-4"
@@ -105,7 +173,7 @@ const Menu = () => {
           <p className="text-red-600 font-semibold text-lg">{error}</p>
           <button
             onClick={() => window.location.reload()}
-            className="mt-6 px-8 py-3 bg-primary text-white rounded-full font-semibold hover:bg-primary/90 transition-all transform hover:scale-105"
+            className="mt-6 px-8 py-3 bg-primary text-white rounded-full font-semibold hover:bg-primary/90 transition-all"
           >
             Try Again
           </button>
@@ -114,29 +182,10 @@ const Menu = () => {
     );
   }
 
-  if (allDishes.length === 0) {
-    return (
-      <div className="pt-28 pb-32 bg-gray-50 min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-6xl mb-4">🍽️</div>
-          <p className="text-gray-500 text-lg font-medium">
-            No menu items available
-          </p>
-          <p className="text-gray-400 mt-2">
-            Please check back later for our delicious offerings
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="pt-28 pb-32 bg-gradient-to-b from-gray-50 to-white min-h-screen">
-      {/* Page Hero */}
-      <section className="relative mb-16 py-28 text-center overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/90 via-primary/80 to-accent/80"></div>
-
-        {/* Animated background pattern */}
+    <div className="min-h-screen bg-gray-50">
+      {/* ===== HERO SECTION ===== */}
+      <section className="relative bg-gradient-to-r from-primary via-primary/90 to-accent py-20 overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-0 left-0 w-full h-full">
             <div className="absolute top-10 left-10 w-72 h-72 bg-white rounded-full blur-3xl animate-pulse"></div>
@@ -145,7 +194,6 @@ const Menu = () => {
           </div>
         </div>
 
-        {/* Decorative floating elements */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-20 left-[10%] text-4xl animate-bounce-slow">
             🍜
@@ -161,7 +209,7 @@ const Menu = () => {
           </div>
         </div>
 
-        <div className="container mx-auto px-4 relative z-10">
+        <div className="container mx-auto px-4 relative z-10 text-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -176,7 +224,7 @@ const Menu = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1, duration: 0.8 }}
-            className="text-5xl md:text-7xl lg:text-8xl font-serif font-bold text-white mt-4 drop-shadow-2xl"
+            className="text-4xl md:text-6xl lg:text-7xl font-serif font-bold text-white mt-4 drop-shadow-2xl"
           >
             Our Menu
           </motion.h1>
@@ -186,7 +234,7 @@ const Menu = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.8 }}
             className="w-24 h-1 bg-white/60 mx-auto mt-6 rounded-full"
-          ></motion.div>
+          />
 
           <motion.p
             initial={{ opacity: 0, y: 30 }}
@@ -213,22 +261,21 @@ const Menu = () => {
         </div>
       </section>
 
-      {/* Search & Filters */}
-      <section className="container mx-auto px-4 md:px-6 mb-12">
-        {/* Search Bar */}
-        <div className="max-w-2xl mx-auto mb-10">
-          <div className="relative group">
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-accent/10 rounded-full blur-xl group-hover:blur-2xl transition-all duration-500"></div>
-            <div className="relative">
+      {/* ===== SEARCH & CATEGORY FILTERS ===== */}
+      <div className="container mx-auto px-4 py-8">
+        {/* Search Bar + Filter toggle */}
+        <div className="max-w-2xl mx-auto mb-8">
+          <div className="flex gap-3">
+            <div className="relative flex-1">
               <input
                 type="text"
                 placeholder="Search for your favorite dishes..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-6 py-4 pl-14 rounded-full border-2 border-gray-200 focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/20 transition-all bg-white/90 backdrop-blur-sm shadow-lg hover:shadow-xl"
+                className="w-full px-6 py-3 pl-14 rounded-full border-2 border-gray-200 focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/20 transition-all bg-white shadow-lg"
               />
               <svg
-                className="absolute left-5 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-primary transition-colors"
+                className="absolute left-5 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -243,18 +290,133 @@ const Menu = () => {
               {searchTerm && (
                 <button
                   onClick={() => setSearchTerm("")}
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 w-8 h-8 flex items-center justify-center bg-gray-200 hover:bg-gray-300 rounded-full transition-colors text-gray-600 hover:text-gray-800"
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 w-8 h-8 flex items-center justify-center bg-gray-200 hover:bg-gray-300 rounded-full transition-colors text-gray-600"
                 >
                   ✕
                 </button>
               )}
             </div>
+
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`px-5 py-3 rounded-full font-semibold transition-all whitespace-nowrap flex items-center gap-2 shadow-sm ${
+                showFilters || hasActiveFilters
+                  ? "bg-gradient-to-r from-primary to-accent text-white shadow-lg shadow-primary/30"
+                  : "bg-white text-gray-600 hover:text-primary border-2 border-gray-200 hover:border-primary/50"
+              }`}
+            >
+              <Filter className="w-4 h-4" />
+              <span className="hidden sm:inline">Filters</span>
+              {hasActiveFilters && (
+                <span className="w-5 h-5 bg-white text-primary rounded-full flex items-center justify-center text-xs font-bold">
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
           </div>
+
+          {/* Filter Panel */}
+          <AnimatePresence>
+            {showFilters && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.25 }}
+                className="mt-4 bg-white rounded-2xl shadow-xl border border-gray-100 p-6 overflow-hidden"
+              >
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      <Sliders className="w-4 h-4 inline mr-2" />
+                      Price range (Rs.)
+                    </label>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="number"
+                        value={tempPriceRange.min}
+                        onChange={(e) =>
+                          setTempPriceRange({
+                            ...tempPriceRange,
+                            min: Number(e.target.value) || 0,
+                          })
+                        }
+                        className="w-1/2 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30"
+                        placeholder="Min"
+                      />
+                      <span className="text-gray-400">–</span>
+                      <input
+                        type="number"
+                        value={tempPriceRange.max}
+                        onChange={(e) =>
+                          setTempPriceRange({
+                            ...tempPriceRange,
+                            max: Number(e.target.value) || maxDishPrice,
+                          })
+                        }
+                        className="w-1/2 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30"
+                        placeholder="Max"
+                      />
+                    </div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={maxDishPrice}
+                      value={tempPriceRange.max}
+                      onChange={(e) =>
+                        setTempPriceRange({
+                          ...tempPriceRange,
+                          max: Number(e.target.value),
+                        })
+                      }
+                      className="w-full accent-primary mt-3"
+                    />
+                    <div className="flex justify-between text-xs text-gray-400 mt-1">
+                      <span>Rs. 0</span>
+                      <span>Rs. {maxDishPrice}</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Sort by
+                    </label>
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    >
+                      <option value="default">Default</option>
+                      <option value="price-low">Price: Low to High</option>
+                      <option value="price-high">Price: High to Low</option>
+                      <option value="name">Name: A to Z</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="mt-6 pt-4 border-t border-gray-100 flex flex-wrap justify-between items-center gap-3">
+                  <button
+                    onClick={resetFilters}
+                    className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-800 font-medium transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                    Clear filters
+                  </button>
+                  <button
+                    onClick={applyFilters}
+                    className="px-6 py-2 bg-gradient-to-r from-primary to-accent text-white rounded-lg font-semibold hover:shadow-lg transition"
+                  >
+                    Apply filters
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Category Tabs */}
         {categories.length > 1 && (
-          <div className="flex flex-wrap justify-center gap-3">
+          <div className="flex flex-wrap justify-center gap-3 mb-8">
             {categories.map((cat) => (
               <motion.button
                 key={cat}
@@ -275,65 +437,114 @@ const Menu = () => {
             ))}
           </div>
         )}
-      </section>
 
-      {/* Results Count */}
-      <div className="container mx-auto px-4 md:px-6 mb-8">
-        <motion.p
-          key={currentItems.length}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="text-gray-500 text-center font-medium"
-        >
-          <span className="inline-block bg-white px-6 py-2 rounded-full shadow-sm">
+        {/* Results Count */}
+        <div className="text-center mb-8">
+          <span className="inline-block bg-white px-6 py-2 rounded-full shadow-sm text-gray-500 font-medium">
             {currentItems.length}{" "}
             {currentItems.length === 1 ? "dish" : "dishes"}
             {searchTerm && ` matching "${searchTerm}"`}
+            {(priceRange.min > 0 || priceRange.max < maxDishPrice) &&
+              ` · Rs. ${priceRange.min}–${priceRange.max}`}
           </span>
-        </motion.p>
+        </div>
       </div>
 
-      {/* Menu Grid */}
-      <section className="container mx-auto px-4 md:px-6">
+      {/* ===== MENU GRID ===== */}
+      <div className="container mx-auto px-4 pb-20">
         <AnimatePresence mode="wait">
           <motion.div
-            key={activeCategory + searchTerm}
+            key={
+              activeCategory +
+              searchTerm +
+              priceRange.min +
+              priceRange.max +
+              sortBy
+            }
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.3 }}
           >
             {currentItems.length > 0 ? (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {currentItems.map((item, index) => (
                   <motion.div
                     key={item._id || item.id || index}
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ opacity: 1, y: 0 }}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: index * 0.05 }}
+                    className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
                   >
-                    <Link
-                      to={`/menu/${item._id || item.id}`}
-                      className="relative block no-underline group"
-                    >
-                      {/* Category badge */}
-                      {activeCategory === "All" && item.category && (
-                        <div className="absolute top-4 left-4 z-10">
-                          <span className="bg-gradient-to-r from-primary to-accent text-white text-xs px-3 py-1.5 rounded-full font-semibold shadow-lg">
-                            {item.category}
+                    <Link to={`/menu/${item._id || item.id}`} className="block">
+                      <div className="relative h-48 overflow-hidden bg-gray-200">
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src =
+                              "https://placehold.co/300x200?text=Food";
+                          }}
+                        />
+                        {item.discount && (
+                          <span className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold">
+                            {item.discount}% OFF
                           </span>
-                        </div>
-                      )}
+                        )}
+                      </div>
 
-                      <MenuItem {...item} index={index} />
+                      <div className="p-4">
+                        <h3 className="font-semibold text-gray-800 text-lg leading-tight mb-1">
+                          {item.name}
+                        </h3>
+
+                        {item.description && (
+                          <p className="text-gray-500 text-sm line-clamp-2 mb-3">
+                            {item.description}
+                          </p>
+                        )}
+
+                        <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+                          <div>
+                            <span className="text-xl font-bold text-primary">
+                              RS{item.price?.toFixed(2) || "0.00"}
+                            </span>
+                            {item.originalPrice && (
+                              <span className="text-sm text-gray-400 line-through ml-2">
+                                RS{item.originalPrice.toFixed(2)}
+                              </span>
+                            )}
+                          </div>
+                          <button
+                            onClick={(e) => handleAddToCart(item, e)}
+                            className="w-10 h-10 bg-primary hover:bg-primary/90 text-white rounded-full flex items-center justify-center transition-all hover:scale-110 shadow-md hover:shadow-lg"
+                          >
+                            <svg
+                              className="w-5 h-5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                              />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
                     </Link>
                   </motion.div>
                 ))}
               </div>
             ) : (
               <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
                 className="text-center py-20 bg-white rounded-3xl shadow-xl"
               >
                 <div className="text-7xl mb-6">🔍</div>
@@ -341,12 +552,13 @@ const Menu = () => {
                   No dishes found
                 </p>
                 <p className="text-gray-400 mt-3">
-                  Try adjusting your search or category filter
+                  Try adjusting your search, category, or price filter
                 </p>
                 <button
                   onClick={() => {
                     setSearchTerm("");
                     setActiveCategory("All");
+                    resetFilters();
                   }}
                   className="mt-8 px-8 py-3 bg-gradient-to-r from-primary to-accent text-white rounded-full font-semibold hover:shadow-lg transition-all transform hover:scale-105"
                 >
@@ -356,48 +568,7 @@ const Menu = () => {
             )}
           </motion.div>
         </AnimatePresence>
-
-        {/* CTA Banner */}
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          viewport={{ once: true }}
-          className="mt-24 relative rounded-3xl overflow-hidden shadow-2xl"
-        >
-          <div className="absolute inset-0 bg-gradient-to-r from-primary via-primary/90 to-accent"></div>
-
-          {/* Animated background dots */}
-          <div className="absolute inset-0 opacity-10">
-            <div
-              className="absolute inset-0"
-              style={{
-                backgroundImage:
-                  "radial-gradient(circle, white 1px, transparent 1px)",
-                backgroundSize: "30px 30px",
-              }}
-            ></div>
-          </div>
-
-          <div className="relative z-10 p-12 md:p-16 text-center">
-            <span className="inline-block text-white/90 font-bold tracking-[0.2em] uppercase text-xs mb-4 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
-              Special Offer
-            </span>
-            <h2 className="text-3xl md:text-4xl font-serif font-bold text-white mt-2 mb-4 drop-shadow">
-              Can't decide what to order?
-            </h2>
-            <p className="text-white/90 max-w-2xl mx-auto mb-8 text-lg font-light">
-              Let our chefs surprise you with a curated tasting experience
-            </p>
-            <Link
-              to="/reservation"
-              className="inline-block bg-white text-primary px-10 py-4 rounded-full font-semibold hover:bg-accent hover:text-white transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
-            >
-              Reserve Your Table
-            </Link>
-          </div>
-        </motion.div>
-      </section>
+      </div>
     </div>
   );
 };
