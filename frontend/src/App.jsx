@@ -36,6 +36,7 @@ import Reservation from "./pages/info/Reservation";
 import Profile from "./pages/user/Profile";
 import MyOrders from "./pages/customer/MyOrders";
 import OrderTracking from "./pages/customer/OrderTracking";
+import Review from "./pages/customer/Review";
 
 // Scroll to top on route change
 const ScrollToTop = () => {
@@ -130,6 +131,14 @@ function AppShell() {
             element={
               <ProtectedRoute>
                 <OrderTracking />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/review/:orderId"
+            element={
+              <ProtectedRoute>
+                <Review />
               </ProtectedRoute>
             }
           />
