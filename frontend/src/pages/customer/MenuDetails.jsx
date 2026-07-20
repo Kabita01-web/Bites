@@ -3,7 +3,10 @@ import React, { useState, useEffect, useContext } from "react";
 import { motion } from "framer-motion";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { getMenuItemByIdAdmin, getAllMenuItemsAdmin } from "../../services/api";
-import { CartContext } from "../../context/CartContext"; // This now works
+import { CartContext } from "../../context/CartContext";
+import { getReviewsByMenuItem, markHelpful } from "../../services/api";
+import ReviewCard from "../../components/ReviewCard";
+import RatingStars from "../../components/RatingStars";
 
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=1200";
@@ -11,7 +14,7 @@ const FALLBACK_IMAGE =
 const MenuDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { addItem } = useContext(CartContext); // This will now work
+  const { addItem } = useContext(CartContext);
 
   const [dish, setDish] = useState(null);
   const [relatedDishes, setRelatedDishes] = useState([]);
@@ -22,6 +25,11 @@ const MenuDetails = () => {
   const [specialInstructions, setSpecialInstructions] = useState("");
   const [addedToCart, setAddedToCart] = useState(false);
   const [cartError, setCartError] = useState("");
+
+  // ✅ Reviews State (moved to component level)
+  const [reviews, setReviews] = useState([]);
+  const [reviewStats, setReviewStats] = useState(null);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
 
   // Helper function to get image URL
   const getImageUrl = (item) => {
@@ -45,6 +53,32 @@ const MenuDetails = () => {
     return `Rs. ${price}`;
   };
 
+  // ✅ Fetch Reviews Function (moved to component level)
+  const fetchReviews = async () => {
+    try {
+      setReviewsLoading(true);
+      const data = await getReviewsByMenuItem(id);
+      if (data.success) {
+        setReviews(data.reviews || []);
+        setReviewStats(data.stats || null);
+      }
+    } catch (error) {
+      console.error("Error fetching reviews:", error);
+    } finally {
+      setReviewsLoading(false);
+    }
+  };
+
+  // ✅ Handle Helpful
+  const handleHelpful = async (reviewId) => {
+    try {
+      await markHelpful(reviewId);
+      await fetchReviews(); // Refresh reviews
+    } catch (error) {
+      console.error("Error marking helpful:", error);
+    }
+  };
+
   useEffect(() => {
     const fetchDish = async () => {
       setLoading(true);
@@ -56,7 +90,7 @@ const MenuDetails = () => {
           const dishData = json.data;
           setDish(dishData);
 
-          // Fetch related dishes from backend
+          // Fetch related dishes
           const allJson = await getAllMenuItemsAdmin();
           const all = Array.isArray(allJson?.data) ? allJson.data : [];
           const related = all
@@ -68,7 +102,6 @@ const MenuDetails = () => {
             )
             .slice(0, 3);
           setRelatedDishes(related);
-          setLoading(false);
         } else {
           throw new Error("Dish not found");
         }
@@ -77,10 +110,16 @@ const MenuDetails = () => {
           err.message ||
             "Could not load this dish. It may no longer be available.",
         );
+      } finally {
         setLoading(false);
       }
     };
+
     fetchDish();
+    // ✅ Fetch reviews when dish loads
+    if (id) {
+      fetchReviews();
+    }
   }, [id]);
 
   const handleAddToCart = async () => {
@@ -205,7 +244,6 @@ const MenuDetails = () => {
                   <span className="text-gray-500 ml-2">per serving</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {/* Spice Level */}
                   {dish.spiceLevel && dish.spiceLevel !== "None" && (
                     <span
                       className={`px-3 py-1 rounded-full text-sm font-semibold ${
@@ -221,8 +259,6 @@ const MenuDetails = () => {
                       {dish.spiceLevel}
                     </span>
                   )}
-
-                  {/* Dietary Tags */}
                   {dish.dietary?.map((tag, index) => (
                     <span
                       key={index}
@@ -231,8 +267,6 @@ const MenuDetails = () => {
                       {tag}
                     </span>
                   ))}
-
-                  {/* Tags (backward compatibility) */}
                   {dish.tags?.map((tag, index) => (
                     <span
                       key={`tag-${index}`}
@@ -308,6 +342,59 @@ const MenuDetails = () => {
                   </div>
                 </div>
               )}
+
+              {/* ✅ Reviews Section */}
+              <div className="mt-12">
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                  Customer Reviews
+                  {reviewStats && (
+                    <span className="text-sm font-normal text-gray-500 ml-2">
+                      ({reviewStats.totalReviews} reviews)
+                    </span>
+                  )}
+                </h2>
+
+                {reviewStats && (
+                  <div className="flex items-center gap-6 mb-6 p-4 bg-gray-50 rounded-xl">
+                    <div className="text-center">
+                      <span className="text-4xl font-bold text-gray-900">
+                        {reviewStats.averageRating?.toFixed(1) || "0.0"}
+                      </span>
+                      <RatingStars
+                        rating={Math.round(reviewStats.averageRating || 0)}
+                        readonly
+                        size={20}
+                      />
+                      <span className="text-sm text-gray-500 block">
+                        {reviewStats.totalReviews} reviews
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {reviewsLoading ? (
+                  <div className="text-center py-8">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+                    <p className="mt-2 text-gray-500">Loading reviews...</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {reviews.length > 0 ? (
+                      reviews.map((review) => (
+                        <ReviewCard
+                          key={review._id}
+                          review={review}
+                          onHelpful={handleHelpful}
+                        />
+                      ))
+                    ) : (
+                      <p className="text-gray-500 text-center py-8">
+                        No reviews yet. Be the first to review this dish!
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Order Section - Right */}
@@ -376,14 +463,12 @@ const MenuDetails = () => {
                   Add to Cart
                 </button>
 
-                {/* Cart Error Message */}
                 {cartError && (
                   <div className="mt-3 p-3 bg-red-100 text-red-700 rounded-lg text-center text-sm">
                     {cartError}
                   </div>
                 )}
 
-                {/* Success Message */}
                 {addedToCart && (
                   <motion.div
                     initial={{ opacity: 0, y: -10 }}
@@ -395,7 +480,6 @@ const MenuDetails = () => {
                   </motion.div>
                 )}
 
-                {/* Reservation Link */}
                 <Link
                   to="/reservation"
                   className="block text-center text-gray-600 hover:text-primary transition-colors text-sm mt-4"
