@@ -17,8 +17,6 @@ const FLAT_DELIVERY_FEE_NPR = 50;
  * @route   POST /api/orders
  * @access  Private
  */
-// backend/controllers/orderController.js - createOrder
-
 export const createOrder = async (req, res) => {
   console.log("🟢 createOrder STARTED");
 
@@ -26,11 +24,9 @@ export const createOrder = async (req, res) => {
     const userId = req.user._id;
     console.log("🟢 User ID:", userId);
 
-    // ✅ Get deliveryAddress from request body
     const { deliveryAddress } = req.body;
     console.log("🟢 Delivery address:", deliveryAddress);
 
-    // ✅ Validate the nested address fields
     if (
       !deliveryAddress ||
       !deliveryAddress.fullName ||
@@ -46,7 +42,6 @@ export const createOrder = async (req, res) => {
       });
     }
 
-    // Find cart
     console.log("🟢 Finding cart...");
     const cart = await Cart.findOne({ user: userId }).populate(
       "items.menuItem",
@@ -71,7 +66,6 @@ export const createOrder = async (req, res) => {
       });
     }
 
-    // Transform cart items
     const orderItems = cart.items.map((cartItem) => {
       const menuItem = cartItem.menuItem;
       if (!menuItem) {
@@ -87,15 +81,13 @@ export const createOrder = async (req, res) => {
       };
     });
 
-    // Calculate totals
     const subtotal = Math.round(
       orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
     );
-    const tax = Math.round(subtotal * 0.13);
-    const deliveryFee = 50;
+    const tax = Math.round(subtotal * TAX_RATE);
+    const deliveryFee = FLAT_DELIVERY_FEE_NPR;
     const total = Math.round(subtotal + tax + deliveryFee);
 
-    // Generate merchant order ID
     let esewaMerchantOrderId = generateMerchantOrderId();
     let attempts = 0;
     while ((await Order.exists({ esewaMerchantOrderId })) && attempts < 5) {
@@ -103,7 +95,6 @@ export const createOrder = async (req, res) => {
       attempts += 1;
     }
 
-    // ✅ Create order with the nested address structure
     const order = await Order.create({
       user: userId,
       items: orderItems,
@@ -138,26 +129,30 @@ export const createOrder = async (req, res) => {
 
 /**
  * @desc    Get all orders for the authenticated user
- * @route   GET /api/orders
+ * @route   GET /api/orders/my
  * @access  Private
  */
 export const getUserOrders = async (req, res) => {
   try {
     const userId = req.user._id;
+    console.log(`📦 Fetching orders for user: ${userId}`);
+
     const orders = await Order.find({ user: userId })
       .sort({ createdAt: -1 })
       .populate("items.menuItem", "name price image");
 
-    return res.status(200).json({
+    console.log(`📦 Found ${orders.length} orders`);
+
+    res.status(200).json({
       success: true,
       count: orders.length,
       orders,
     });
   } catch (error) {
-    console.error("getUserOrders error:", error);
-    return res.status(500).json({
+    console.error("Get user orders error:", error);
+    res.status(500).json({
       success: false,
-      message: "Failed to fetch orders.",
+      message: "Failed to fetch orders",
     });
   }
 };
@@ -188,7 +183,6 @@ export const getOrder = async (req, res) => {
         .json({ success: false, message: "Order not found." });
     }
 
-    // Check if user is authorized to view this order
     const isOwner = order.user._id.toString() === req.user._id.toString();
     const isAdmin = req.user.role === "admin" || req.user.role === "moderator";
 
@@ -199,7 +193,6 @@ export const getOrder = async (req, res) => {
       });
     }
 
-    // Get payment details if they exist
     const payment = await Payment.findOne({ order: order._id }).lean();
 
     return res.status(200).json({
@@ -246,7 +239,6 @@ export const updateOrderStatus = async (req, res) => {
         .json({ success: false, message: "Order not found." });
     }
 
-    // Check authorization
     const isOwner = order.user.toString() === req.user._id.toString();
     const isAdmin = req.user.role === "admin" || req.user.role === "moderator";
 
@@ -257,19 +249,27 @@ export const updateOrderStatus = async (req, res) => {
       });
     }
 
-    if (status) order.status = status;
+    if (status) {
+      order.status = status;
+      console.log(`🔄 Order ${id} status updated to: ${status}`);
+    }
     if (paymentStatus) order.paymentStatus = paymentStatus;
     if (typeof isPaid === "boolean") order.isPaid = isPaid;
     if (paidAt) order.paidAt = paidAt;
 
     await order.save();
 
-    return res.status(200).json({ success: true, order });
+    return res.status(200).json({
+      success: true,
+      order,
+      message: `Order status updated to ${status || "unchanged"}`,
+    });
   } catch (error) {
     console.error("updateOrderStatus error:", error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Failed to update order status." });
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update order status.",
+    });
   }
 };
 
@@ -284,42 +284,77 @@ export const markOrderAsPaid = async ({
   esewaReferenceId,
   esewaResponseData,
 }) => {
-  const order = await Order.findById(orderId);
-  if (!order) {
-    throw new Error(`markOrderAsPaid: order ${orderId} not found`);
+  try {
+    const order = await Order.findById(orderId);
+    if (!order) {
+      throw new Error(`Order ${orderId} not found`);
+    }
+
+    order.isPaid = true;
+    order.paidAt = new Date();
+    order.paymentStatus = "paid";
+    order.esewaTransactionId = esewaTransactionId;
+    order.esewaReferenceId = esewaReferenceId || null;
+    order.esewaResponseData = esewaResponseData || null;
+    order.status = "confirmed";
+
+    await order.save();
+    console.log(`✅ Order ${orderId} marked as CONFIRMED`);
+
+    await Cart.findOneAndDelete({ user: order.user });
+
+    return order;
+  } catch (error) {
+    console.error("markOrderAsPaid error:", error);
+    throw error;
   }
-  order.isPaid = true;
-  order.paidAt = new Date();
-  order.paymentStatus = "paid";
-  order.esewaTransactionId = esewaTransactionId;
-  order.esewaReferenceId = esewaReferenceId || null;
-  order.esewaResponseData = esewaResponseData || null;
-  order.status = order.status === "pending" ? "confirmed" : order.status;
-  await order.save();
-
-  // Also clear the user's cart after successful payment
-  await Cart.findOneAndDelete({ user: order.user });
-
-  return order;
 };
 
+/**
+ * Internal helper - Mark order as payment failed
+ */
 export const markOrderPaymentFailed = async ({
   orderId,
   esewaResponseData,
 }) => {
-  const order = await Order.findById(orderId);
-  if (!order) {
-    throw new Error(`markOrderPaymentFailed: order ${orderId} not found`);
+  try {
+    const order = await Order.findById(orderId);
+    if (!order) {
+      throw new Error(`Order ${orderId} not found`);
+    }
+    order.paymentStatus = "failed";
+    order.esewaResponseData = esewaResponseData || order.esewaResponseData;
+    await order.save();
+    console.log(`❌ Order ${orderId} marked as PAYMENT FAILED`);
+    return order;
+  } catch (error) {
+    console.error("markOrderPaymentFailed error:", error);
+    throw error;
   }
-  order.paymentStatus = "failed";
-  order.esewaResponseData = esewaResponseData || order.esewaResponseData;
-  await order.save();
-  return order;
 };
 
 /**
- * @desc    Fetch a single order with populated user and payment details
- * @route   GET /api/orders/:id (alias for getOrder)
- * @access  Private (owner or admin)
+ * @desc    Get all orders (Admin only)
+ * @route   GET /api/orders/admin/all
+ * @access  Private/Admin
  */
-// getOrderById is already defined as an alias for getOrder above
+export const getAllOrdersAdmin = async (req, res) => {
+  try {
+    const orders = await Order.find()
+      .sort({ createdAt: -1 })
+      .populate("user", "name email")
+      .populate("items.menuItem", "name price image");
+
+    res.status(200).json({
+      success: true,
+      count: orders.length,
+      orders,
+    });
+  } catch (error) {
+    console.error("Get all orders admin error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch orders",
+    });
+  }
+};

@@ -13,8 +13,13 @@ const router = express.Router();
 // ---------------------------------------------------------------------------
 // User routes - requires authentication
 // ---------------------------------------------------------------------------
+
+// ✅ SPECIFIC routes FIRST (before generic ones)
+router.get("/my", protect, getUserOrders); // ✅ This must be FIRST
+
+// ✅ Generic routes AFTER specific ones
 router.post("/", protect, createOrder);
-router.get("/", protect, getUserOrders);
+router.get("/", protect, getUserOrders); // This catches everything else
 router.get("/:id", protect, getOrder);
 router.put("/:id/status", protect, updateOrderStatus);
 
@@ -47,7 +52,6 @@ router.get(
   },
 );
 
-// Admin: Update order status (full control)
 router.put(
   "/admin/:id/status",
   protect,
@@ -55,7 +59,6 @@ router.put(
   updateOrderStatus,
 );
 
-// Admin: Get single order by ID
 router.get("/admin/:id", protect, authorize("admin", "moderator"), getOrder);
 
 export default router;
