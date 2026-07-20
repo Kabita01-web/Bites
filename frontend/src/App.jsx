@@ -34,6 +34,8 @@ import About from "./pages/info/About";
 import Contact from "./pages/info/Contact";
 import Reservation from "./pages/info/Reservation";
 import Profile from "./pages/user/Profile";
+import MyOrders from "./pages/customer/MyOrders";
+import OrderTracking from "./pages/customer/OrderTracking";
 
 // Scroll to top on route change
 const ScrollToTop = () => {
@@ -113,6 +115,22 @@ function AppShell() {
               <h1 className="text-center mt-20 text-3xl">
                 404 - Page Not Found
               </h1>
+            }
+          />
+          <Route
+            path="/my-orders"
+            element={
+              <ProtectedRoute>
+                <MyOrders />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/order/:orderId"
+            element={
+              <ProtectedRoute>
+                <OrderTracking />
+              </ProtectedRoute>
             }
           />
         </Routes>
