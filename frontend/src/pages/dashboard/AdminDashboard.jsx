@@ -1,4 +1,3 @@
-// frontend/src/pages/dashboard/AdminDashboard.jsx
 import React, { useState, useEffect } from "react";
 import {
   ShoppingBag,

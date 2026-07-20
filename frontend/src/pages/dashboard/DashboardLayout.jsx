@@ -12,6 +12,7 @@ import {
   UtensilsCrossed,
   CalendarCheck,
   CreditCard,
+  Package,
 } from "lucide-react";
 import { AuthContext } from "../../context/AuthContext";
 
@@ -20,6 +21,12 @@ const navItems = [
     label: "Dashboard",
     path: "/dashboard",
     icon: LayoutDashboard,
+    roles: ["admin", "moderator"],
+  },
+  {
+    label: "Orders",
+    path: "/dashboard/orders",
+    icon: Package,
     roles: ["admin", "moderator"],
   },
   {
