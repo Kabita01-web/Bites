@@ -243,6 +243,14 @@ const MyOrders = () => {
                       View Details
                       <ChevronRight className="w-4 h-4" />
                     </Link>
+                    {order.status === "delivered" && (
+                      <Link
+                        to={`/review/${order._id}`}
+                        className="flex items-center gap-1 text-sm text-green-500 hover:text-green-600 font-medium transition"
+                      >
+                        ⭐ Write a Review
+                      </Link>
+                    )}
                   </div>
                 </div>
               </div>
