@@ -288,6 +288,41 @@ export const getOrderDetails = async (orderId) => {
   const response = await instance.get(`/orders/${orderId}`);
   return response.data;
 };
+
+// frontend/src/services/api.js
+
+// Reviews
+export const createReview = async (data) => {
+  const response = await instance.post("/reviews", data);
+  return response.data;
+};
+
+export const getReviewsByMenuItem = async (menuItemId, params = {}) => {
+  const response = await instance.get(`/reviews/menu/${menuItemId}`, {
+    params,
+  });
+  return response.data;
+};
+
+export const getMyReviews = async () => {
+  const response = await instance.get("/reviews/my");
+  return response.data;
+};
+
+export const updateReview = async (reviewId, data) => {
+  const response = await instance.put(`/reviews/${reviewId}`, data);
+  return response.data;
+};
+
+export const deleteReview = async (reviewId) => {
+  const response = await instance.delete(`/reviews/${reviewId}`);
+  return response.data;
+};
+
+export const markHelpful = async (reviewId) => {
+  const response = await instance.put(`/reviews/${reviewId}/helpful`);
+  return response.data;
+};
 // ---------------------------------------------------------------------------
 // 9) Export the raw instance for custom requests
 // ---------------------------------------------------------------------------
