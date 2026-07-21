@@ -1,17 +1,24 @@
-// frontend/src/components/ReviewCard.jsx
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { User, ThumbsUp, Flag, Clock } from "lucide-react";
+import { User, ThumbsUp, Flag, Clock, CheckCircle } from "lucide-react";
 import RatingStars from "./RatingStars";
 
 const ReviewCard = ({ review, onHelpful, onReport }) => {
   const [isHelpfulLoading, setIsHelpfulLoading] = useState(false);
+  const [hasUserLiked, setHasUserLiked] = useState(false);
 
   const handleHelpful = async () => {
-    if (isHelpfulLoading) return;
+    if (isHelpfulLoading || hasUserLiked) return;
+
     setIsHelpfulLoading(true);
-    await onHelpful(review._id);
-    setIsHelpfulLoading(false);
+    try {
+      await onHelpful(review._id);
+      setHasUserLiked(true);
+    } catch (error) {
+      console.error("Error marking helpful:", error);
+    } finally {
+      setIsHelpfulLoading(false);
+    }
   };
 
   const formatDate = (date) => {
@@ -50,7 +57,8 @@ const ReviewCard = ({ review, onHelpful, onReport }) => {
               <Clock className="w-3 h-3" />
               <span>{formatDate(review.createdAt)}</span>
               {review.isVerified && (
-                <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-[10px] font-medium">
+                <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-[10px] font-medium flex items-center gap-1">
+                  <CheckCircle className="w-3 h-3" />
                   Verified Order
                 </span>
               )}
@@ -83,10 +91,14 @@ const ReviewCard = ({ review, onHelpful, onReport }) => {
       <div className="flex items-center justify-between pt-3 border-t border-gray-100">
         <button
           onClick={handleHelpful}
-          disabled={isHelpfulLoading}
-          className="flex items-center gap-2 text-sm text-gray-500 hover:text-primary transition-colors"
+          disabled={isHelpfulLoading || hasUserLiked}
+          className={`flex items-center gap-2 text-sm transition-colors ${
+            hasUserLiked ? "text-primary" : "text-gray-500 hover:text-primary"
+          } ${isHelpfulLoading ? "opacity-50 cursor-not-allowed" : ""}`}
         >
-          <ThumbsUp className="w-4 h-4" />
+          <ThumbsUp
+            className={`w-4 h-4 ${hasUserLiked ? "fill-primary" : ""}`}
+          />
           <span>Helpful ({review.helpful || 0})</span>
         </button>
         <button

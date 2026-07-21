@@ -249,9 +249,6 @@ export const deleteReview = async (req, res) => {
   }
 };
 
-// @desc    Mark review as helpful
-// @route   PUT /api/reviews/:id/helpful
-// @access  Private
 export const markHelpful = async (req, res) => {
   try {
     const { id } = req.params;
@@ -265,15 +262,19 @@ export const markHelpful = async (req, res) => {
       });
     }
 
+    // ✅ Check if user already marked as helpful
     if (review.helpfulBy && review.helpfulBy.includes(userId)) {
       return res.status(400).json({
         success: false,
-        message: "Already marked as helpful",
+        message: "You already marked this review as helpful",
       });
     }
 
+    // ✅ Add user to helpfulBy array and increment count
     review.helpful += 1;
-    if (!review.helpfulBy) review.helpfulBy = [];
+    if (!review.helpfulBy) {
+      review.helpfulBy = [];
+    }
     review.helpfulBy.push(userId);
 
     await review.save();
@@ -281,6 +282,7 @@ export const markHelpful = async (req, res) => {
     res.status(200).json({
       success: true,
       helpful: review.helpful,
+      message: "Marked as helpful",
     });
   } catch (error) {
     console.error("Mark helpful error:", error);
