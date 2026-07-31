@@ -28,7 +28,7 @@ const MenuItemManagement = () => {
     price: "",
     category: "",
     description: "",
-    image: "",
+    imageUrl: "",
     isAvailable: true,
   });
 
@@ -105,7 +105,7 @@ const MenuItemManagement = () => {
       price: item.price,
       category: item.category || "",
       description: item.description || "",
-      image: item.image || "",
+      imageUrl: item.imageUrl || "",
       isAvailable: item.isAvailable !== false,
     });
     setShowForm(true);
@@ -119,7 +119,7 @@ const MenuItemManagement = () => {
       price: "",
       category: "",
       description: "",
-      image: "",
+      imageUrl: "",
       isAvailable: true,
     });
   };
@@ -250,16 +250,16 @@ const MenuItemManagement = () => {
                   </label>
                   <input
                     type="text"
-                    value={formData.image}
+                    value={formData.imageUrl}
                     onChange={(e) =>
-                      setFormData({ ...formData, image: e.target.value })
+                      setFormData({ ...formData, imageUrl: e.target.value })
                     }
                     className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                     placeholder="https://example.com/image.jpg"
                   />
-                  {formData.image && (
+                  {formData.imageUrl && (
                     <img
-                      src={formData.image}
+                      src={formData.imageUrl}
                       alt="Preview"
                       className="mt-2 w-24 h-24 object-cover rounded-lg"
                       onError={(e) => (e.target.style.display = "none")}
@@ -312,9 +312,9 @@ const MenuItemManagement = () => {
             key={item._id}
             className="border rounded-lg overflow-hidden hover:shadow-lg transition"
           >
-            {item.image ? (
+            {item.imageUrl ? (
               <img
-                src={item.image}
+                src={item.imageUrl}
                 alt={item.name}
                 className="w-full h-40 object-cover"
                 onError={(e) => (e.target.src = "")}
