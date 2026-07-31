@@ -95,7 +95,10 @@ const DashboardLayout = () => {
           sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         }`}
       >
-        <div className="flex items-center gap-2.5 px-5 h-16 border-b border-gray-100 shrink-0">
+        <Link
+          to="/"
+          className="flex items-center gap-2.5 px-5 h-16 border-b border-gray-100 shrink-0 hover:bg-gray-50 transition"
+        >
           <div className="p-1.5 rounded-lg bg-primary">
             <UtensilsCrossed className="text-white w-5 h-5" />
           </div>
@@ -103,7 +106,7 @@ const DashboardLayout = () => {
           <span className="ml-auto text-[10px] uppercase tracking-widest text-gray-400 font-semibold bg-gray-100 px-2 py-0.5 rounded-full">
             {user?.role}
           </span>
-        </div>
+        </Link>
 
         <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
           {filteredNav.map((item) => (
