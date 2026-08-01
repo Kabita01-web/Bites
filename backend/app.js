@@ -17,6 +17,8 @@ import statsRoute from "./routes/statsRoute.js";
 import reviewRoutes from "./routes/reviewRoute.js";
 
 dotenv.config();
+console.log("===== NEW DEPLOY 2026-08-01 =====");
+console.log("CLIENT_URL =", process.env.CLIENT_URL);
 
 const app = express();
 
