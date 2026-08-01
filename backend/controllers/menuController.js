@@ -1,5 +1,4 @@
-// src/controllers/menuController.js
-import Menu from "../models/Menu.js";
+import Menu from "../models/menu.js";
 import MenuItem from "../models/MenuItem.js";
 
 // ─── Menu CRUD ───────────────────────────────────────────
