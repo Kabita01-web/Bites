@@ -9,11 +9,14 @@ const Hero = () => {
     <section className="relative h-screen w-full flex items-center overflow-hidden">
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
-        <img
+        <motion.img
           src="https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&q=80&w=2000"
           alt="Warm restaurant atmosphere"
           onError={handleImageError}
           className="w-full h-full object-cover"
+          initial={{ scale: 1 }}
+          animate={{ scale: 1.12 }}
+          transition={{ duration: 20, ease: "linear" }}
         />
         {/* Darker overlay for better text contrast */}
         <div className="absolute inset-0 bg-black/50"></div>
