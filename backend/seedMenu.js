@@ -1,20 +1,6 @@
 /**
- * Seed script — inserts additional menu items into MongoDB, on top of
- * whatever you've already added through the admin dashboard.
+ * Seed script — inserts additional menu items into MongoDB
  *
- * Category values are constrained by your MenuItem schema's enum:
- * ["food", "beverage", "dessert", "side"] — NOT "Appetizers"/"Mains"/etc.
- * Items below are mapped to the closest real category.
- *
- * Note: your schema also has a separate `Menu` model (breakfast/lunch/
- * dinner/specials groupings) that MenuItem can optionally link to via its
- * `menu` field. These seeded items don't set that field, so they won't
- * belong to any named Menu grouping — they'll still show up wherever your
- * frontend fetches MenuItem documents directly (e.g. getAllMenuItemsAdmin).
- * If you want them attached to a specific Menu, let me know its _id and
- * I'll add `menu: "<id>"` to each item.
- *
- * PLACEMENT: put this file next to app.js (same level as models/).
  * Run with: node seedMenu.js
  */
 
@@ -26,7 +12,7 @@ dotenv.config();
 
 const MONGO_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/bites";
 
-export const menuItems = [
+const menuItems = [
   // ---------------- food ----------------
   {
     name: "Crispy Momo Platter",
@@ -152,17 +138,44 @@ export const menuItems = [
 async function seed() {
   try {
     await mongoose.connect(MONGO_URI);
-    console.log("Connected to MongoDB");
+    console.log("✅ Connected to MongoDB");
 
-    // Not clearing existing items (unlike seedBlogs.js) since you already
-    // have items added through the admin dashboard that you want to keep.
+    // Check if items already exist
+    const existingItems = await MenuItem.countDocuments();
+    if (existingItems > 0) {
+      console.log(`⚠️  Database already has ${existingItems} menu items.`);
+      console.log("📝 Skipping seed to avoid duplicates.");
+      console.log("💡 To re-seed, run: node seedMenu.js --force");
+
+      // Check if --force flag is used
+      if (process.argv.includes("--force")) {
+        console.log("🗑️  Removing existing items...");
+        await MenuItem.deleteMany({});
+        console.log("✅ Old items removed");
+      } else {
+        await mongoose.disconnect();
+        return;
+      }
+    }
+
     const inserted = await MenuItem.insertMany(menuItems);
-    console.log(`Inserted ${inserted.length} menu items`);
+    console.log(`✅ Inserted ${inserted.length} menu items successfully!`);
+
+    // Log the first few items
+    console.log("\n📋 Added items:");
+    inserted.slice(0, 5).forEach((item, index) => {
+      console.log(`  ${index + 1}. ${item.name} - Rs. ${item.price}`);
+    });
+    if (inserted.length > 5) {
+      console.log(`  ... and ${inserted.length - 5} more items`);
+    }
   } catch (err) {
-    console.error("Seed failed:", err);
+    console.error("❌ Seed failed:", err);
   } finally {
     await mongoose.disconnect();
+    console.log("🔌 Disconnected from MongoDB");
   }
 }
 
+// Run the seed function
 seed();

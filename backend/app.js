@@ -16,6 +16,9 @@ import orderRoutes from "./routes/orderRoutes.js";
 import statsRoute from "./routes/statsRoute.js";
 import reviewRoutes from "./routes/reviewRoute.js";
 
+// Import MenuItem model for public route
+import MenuItem from "./models/menuItem.js";
+
 dotenv.config();
 console.log("===== NEW DEPLOY 2026-08-01 =====");
 console.log("CLIENT_URL =", process.env.CLIENT_URL);
@@ -26,12 +29,41 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+// ========== FIXED CORS ==========
+const allowedOrigins = [
+  "https://bites-hwqf.onrender.com", // Your frontend
+  "https://bites-frontend-kaal.onrender.com",
+  "http://localhost:5173",
+  "http://localhost:3000",
+];
+
 app.use(
   cors({
-    origin: "https://bites-frontend-kaal.onrender.com",
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        console.log("Blocked by CORS:", origin);
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   }),
 );
+
+// ========== PUBLIC MENU ENDPOINT ==========
+app.get("/api/menu/public", async (req, res) => {
+  try {
+    const items = await MenuItem.find({ isAvailable: true });
+    console.log(`📋 Served ${items.length} menu items to public`);
+    res.json(items);
+  } catch (error) {
+    console.error("Error fetching public menu:", error);
+    res.status(500).json({ error: "Failed to fetch menu items" });
+  }
+});
 
 // Routes
 app.use("/api/auth", authRoute);
