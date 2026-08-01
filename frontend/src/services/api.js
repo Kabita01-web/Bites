@@ -4,7 +4,7 @@ import axios from "axios";
 // 1) Axios Instance Configuration
 // ---------------------------------------------------------------------------
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
+  import.meta.env.VITE_API_BASE_URL || "https://bites-hwqf.onrender.com/";
 
 const instance = axios.create({
   baseURL: API_BASE_URL,
