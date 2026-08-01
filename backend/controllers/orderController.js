@@ -4,19 +4,6 @@ import Payment from "../models/Payment.js";
 import Cart from "../models/Cart.js";
 import { generateMerchantOrderId } from "../utils/esewa.js";
 
-// NOTE: I'm not certain what tax rate or delivery fee your business actually
-// uses — these are placeholders matching what you specified (13% VAT,
-// NPR 50 delivery). Adjust if your real numbers differ.
-const TAX_RATE = 0.13;
-const FLAT_DELIVERY_FEE_NPR = 50;
-
-/**
- * @desc    Create a new order from the user's cart (status starts as 'pending').
- *          Also pre-generates a unique eSewa merchant order id so the
- *          payment step can reuse it without a second DB write.
- * @route   POST /api/orders
- * @access  Private
- */
 export const createOrder = async (req, res) => {
   console.log("🟢 createOrder STARTED");
 
@@ -127,11 +114,6 @@ export const createOrder = async (req, res) => {
   }
 };
 
-/**
- * @desc    Get all orders for the authenticated user
- * @route   GET /api/orders/my
- * @access  Private
- */
 export const getUserOrders = async (req, res) => {
   try {
     const userId = req.user._id;
@@ -157,11 +139,6 @@ export const getUserOrders = async (req, res) => {
   }
 };
 
-/**
- * @desc    Get a single order by ID (with populated user and payment details)
- * @route   GET /api/orders/:id
- * @access  Private (owner or admin)
- */
 export const getOrder = async (req, res) => {
   try {
     const { id } = req.params;
@@ -208,19 +185,8 @@ export const getOrder = async (req, res) => {
   }
 };
 
-/**
- * @desc    Get a single order by ID (alias for getOrder, for backward compatibility)
- * @route   GET /api/orders/:id
- * @access  Private (owner or admin)
- */
 export const getOrderById = getOrder;
 
-/**
- * @desc    Update order status/payment fields — used internally by the
- *          eSewa success/failure handlers, and exposed as an admin route.
- * @route   PUT /api/orders/:id/status
- * @access  Private/Admin
- */
 export const updateOrderStatus = async (req, res) => {
   try {
     const { id } = req.params;
@@ -273,11 +239,6 @@ export const updateOrderStatus = async (req, res) => {
   }
 };
 
-/**
- * Internal helper (not a route handler) — called from the eSewa success
- * handler once the signature and status-check API have both confirmed
- * the payment.
- */
 export const markOrderAsPaid = async ({
   orderId,
   esewaTransactionId,
@@ -310,9 +271,6 @@ export const markOrderAsPaid = async ({
   }
 };
 
-/**
- * Internal helper - Mark order as payment failed
- */
 export const markOrderPaymentFailed = async ({
   orderId,
   esewaResponseData,
@@ -333,11 +291,6 @@ export const markOrderPaymentFailed = async ({
   }
 };
 
-/**
- * @desc    Get all orders (Admin only)
- * @route   GET /api/orders/admin/all
- * @access  Private/Admin
- */
 export const getAllOrdersAdmin = async (req, res) => {
   try {
     const orders = await Order.find()

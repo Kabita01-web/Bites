@@ -1,6 +1,6 @@
 // backend/controllers/systemStatsController.js
 import Order from "../models/Order.js";
-import MenuItem from "../models/MenuItem.js";
+import MenuItem from "../models/menuItem.js";
 import Reservation from "../models/Reservation.js";
 import Payment from "../models/Payment.js";
 import User from "../models/User.js";
