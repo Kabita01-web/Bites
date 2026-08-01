@@ -1,5 +1,5 @@
 import Menu from "../models/menu.js";
-import MenuItem from "../models/MenuItem.js";
+import MenuItem from "../models/menuItem.js";
 
 // ─── Menu CRUD ───────────────────────────────────────────
 
