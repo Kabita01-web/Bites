@@ -2,7 +2,7 @@
 import mongoose from "mongoose";
 import Review from "../models/Review.js";
 import Order from "../models/Order.js";
-import MenuItem from "../models/MenuItem.js";
+import MenuItem from "../models/menuItem.js";
 
 // @desc    Create a review
 // @route   POST /api/reviews
