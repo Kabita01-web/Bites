@@ -327,13 +327,21 @@ vercel --prod
 
 ## 📸 Screenshots
 
-| Home Page                             | Menu Page                               |
-| ------------------------------------- | --------------------------------------- |
-| ![Home Page]("./screenshot/home.jpg") | ![Menu Page](.".\screenshot\home.jpeg") |
+### Home Page
 
-| Checkout                                | Admin Dashboard                                 |
-| --------------------------------------- | ----------------------------------------------- |
-| ![Checkout](./screenshots/checkout.png) | ![Admin Dashboard](./screenshots/dashboard.png) |
+![Home](./screenshot/home.jpeg)
+
+### Menu Page
+
+![Menu](./screenshot/menu.jpeg)
+
+### Checkout Page
+
+![Checkout](./screenshot/checkout.jpeg)
+
+### Admin Dashboard
+
+![Dashboard](./screenshot/dashboard.png)
 
 ## 🤝 Contributing
 
