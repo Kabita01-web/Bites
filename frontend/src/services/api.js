@@ -323,6 +323,16 @@ export const markHelpful = async (reviewId) => {
   const response = await instance.put(`/reviews/${reviewId}/helpful`);
   return response.data;
 };
+
+export const getPublicMenu = async () => {
+  try {
+    const response = await instance.get("/menu/public");
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching public menu:", error);
+    throw new Error("Could not load the menu. Please try again later.");
+  }
+};
 // ---------------------------------------------------------------------------
 // 9) Export the raw instance for custom requests
 // ---------------------------------------------------------------------------

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
-import { getAllMenuItemsAdmin } from "../../services/api";
+import { getPublicMenu } from "../../services/api"; // ← Changed this
 import { useCart } from "../../context/CartContext";
 import { Filter, Sliders, X } from "lucide-react";
 
@@ -25,8 +25,8 @@ const Menu = () => {
       setError("");
 
       try {
-        const json = await getAllMenuItemsAdmin();
-        const data = json?.data;
+        // ← CHANGED: Using public endpoint instead of admin
+        const data = await getPublicMenu(); // Returns array directly
 
         if (Array.isArray(data) && data.length > 0) {
           const backendData = data
