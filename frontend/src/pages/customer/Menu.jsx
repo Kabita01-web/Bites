@@ -4,6 +4,8 @@ import { Link } from "react-router-dom";
 import { getPublicMenu } from "../../services/api"; // ← Changed this
 import { useCart } from "../../context/CartContext";
 import { Filter, Sliders, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 
 const Menu = () => {
   const [allDishes, setAllDishes] = useState([]);
@@ -12,6 +14,9 @@ const Menu = () => {
   const [activeCategory, setActiveCategory] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
   const { addItem } = useCart();
+  const navigate = useNavigate();
+
+  const { isAuthenticated } = useAuth();
 
   // Filter state
   const [showFilters, setShowFilters] = useState(false);
@@ -134,6 +139,12 @@ const Menu = () => {
   const handleAddToCart = async (dish, e) => {
     e.preventDefault();
     e.stopPropagation();
+
+    if (!isAuthenticated) {
+      navigate("/login", { state: { from: "/menu" } });
+      return;
+    }
+
     const ok = await addItem(dish._id, 1);
     if (!ok) {
       console.error("Failed to add", dish.name, "to cart");

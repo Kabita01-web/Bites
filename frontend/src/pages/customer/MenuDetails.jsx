@@ -7,6 +7,7 @@ import { CartContext } from "../../context/CartContext";
 import { getReviewsByMenuItem, markHelpful } from "../../services/api";
 import ReviewCard from "../../components/ReviewCard";
 import RatingStars from "../../components/RatingStars";
+import { useAuth } from "../../context/AuthContext";
 
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=1200";
@@ -15,6 +16,7 @@ const MenuDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addItem } = useContext(CartContext);
+  const { isAuthenticated } = useAuth(); //
 
   const [dish, setDish] = useState(null);
   const [relatedDishes, setRelatedDishes] = useState([]);
@@ -123,6 +125,11 @@ const MenuDetails = () => {
   }, [id]);
 
   const handleAddToCart = async () => {
+    if (!isAuthenticated) {
+      navigate("/login", { state: { from: `/menu/${id}` } });
+      return;
+    }
+
     try {
       setCartError("");
       await addItem(dish._id, quantity);
