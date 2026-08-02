@@ -10,11 +10,12 @@ export const ROLES = {
 // Protect middleware - requires authentication
 export const protect = async (req, res, next) => {
   try {
-    // Get token from cookie or Authorization header
-    let token = req.cookies.token;
+    let token = null;
 
-    if (!token && req.headers.authorization) {
-      token = req.headers.authorization.split(" ")[1]; // Bearer TOKEN
+    if (req.headers.authorization?.startsWith("Bearer ")) {
+      token = req.headers.authorization.split(" ")[1];
+    } else if (req.cookies.token) {
+      token = req.cookies.token;
     }
 
     if (!token) {
@@ -30,7 +31,7 @@ export const protect = async (req, res, next) => {
 
     next();
   } catch (error) {
-    res.status(401).json({ message: "Not authorized, token failed" });
+    return res.status(401).json({ message: "Not authorized, token failed" });
   }
 };
 
