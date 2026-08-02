@@ -51,25 +51,30 @@ export const login = async (req, res) => {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    // Include role in JWT token
+    // Generate token
     const token = jwt.sign(
-      { id: user._id, role: user.role }, // Added role here
+      { id: user._id, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: "7d" },
     );
 
+    // Set cookie (for traditional web apps)
     res.cookie("token", token, {
       httpOnly: true,
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      secure: process.env.NODE_ENV === "production", // Only in production
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     });
 
+    // ✅ RETURN TOKEN IN RESPONSE BODY (for frontend)
     res.status(200).json({
       message: "Login successful",
+      token: token, // ← ADD THIS LINE
       user: {
         id: user._id,
         username: user.username,
         email: user.email,
-        role: user.role, // Include role in response
+        role: user.role,
       },
     });
   } catch (error) {
