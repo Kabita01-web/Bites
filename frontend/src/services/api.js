@@ -29,13 +29,15 @@ instance.interceptors.request.use(
 );
 
 // Response interceptor for handling errors globally
+// In api.js - Update the response interceptor
 instance.interceptors.response.use(
   (response) => response,
   (error) => {
     // Handle 401 Unauthorized (token expired)
     if (error.response?.status === 401) {
-      localStorage.removeItem("token");
-      // Optionally redirect to login
+      console.warn("⚠️ 401 Unauthorized - Token may be expired");
+      // Don't remove token here - let the AuthContext handle it
+      // localStorage.removeItem("token");
       // window.location.href = "/login";
     }
     return Promise.reject(error);
@@ -52,13 +54,12 @@ export const registerUser = async (userData) => {
 
 export const loginUser = async (userData) => {
   const response = await instance.post("/auth/login", userData);
-  // Save token if returned
+  // ✅ This expects response.data.token
   if (response.data.token) {
     localStorage.setItem("token", response.data.token);
   }
   return response.data;
 };
-
 export const logoutUser = async () => {
   const response = await instance.post("/auth/logout");
   localStorage.removeItem("token");
