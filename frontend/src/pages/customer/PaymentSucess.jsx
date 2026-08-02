@@ -53,7 +53,7 @@ const PaymentSuccess = () => {
         {/* Action Buttons */}
         <div className="space-y-3">
           <Link
-            to="/orders"
+            to="/my-orders"
             className="flex items-center justify-center gap-2 w-full bg-primary text-white py-3 rounded-xl font-semibold hover:bg-primary/90 transition"
           >
             <Package size={20} />
