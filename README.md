@@ -298,6 +298,12 @@ bites/
 └── README.md
 ```
 
+## 🔗 Live Demo
+
+- **Live Site:** [https://bites-frontend-kaal.onrender.com](https://bites-frontend-kaal.onrender.com)
+
+> ⚠️ Hosted on Render's free tier — the backend may take 30–60 seconds to wake up on first load if it's been idle.
+
 ## 🚀 Deployment
 
 ### Deploy backend (Render)
@@ -311,19 +317,16 @@ bites/
 7. Add environment variables
 8. Deploy
 
-### Deploy frontend (Vercel)
+### Deploy frontend (Render)
 
-```bash
-# Install Vercel CLI
-npm install -g vercel
-
-# Build the app
-cd frontend
-npm run build
-
-# Deploy
-vercel --prod
-```
+1. Push code to GitHub
+2. Go to [render.com](https://render.com)
+3. Create a new **Static Site**
+4. Connect your GitHub repo (select the `frontend` folder as root, if applicable)
+5. Set build command: `npm install && npm run build`
+6. Set publish directory: `dist`
+7. Add environment variable: `VITE_API_BASE_URL` pointing to your deployed backend URL
+8. Deploy
 
 ## 📸 Screenshots
 
