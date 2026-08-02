@@ -4,6 +4,9 @@ import Payment from "../models/Payment.js";
 import Cart from "../models/Cart.js";
 import { generateMerchantOrderId } from "../utils/esewa.js";
 
+const TAX_RATE = 0.13;
+const FLAT_DELIVERY_FEE_NPR = 50;
+
 export const createOrder = async (req, res) => {
   console.log("🟢 createOrder STARTED");
 
