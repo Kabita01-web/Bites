@@ -2,16 +2,25 @@ import React from "react";
 // eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
 import { Plus } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { fallbackImage, handleImageError } from "../utils/imageFallback";
 import { useCart } from "../context/CartContext";
+import { useAuth } from "../context/AuthContext";
 
 const DishCard = ({ id, image, name, description, price }) => {
+  const navigate = useNavigate();
   const { addItem } = useCart();
+  const { isAuthenticated } = useAuth();
 
   const handleAdd = async (e) => {
     e.preventDefault();
     e.stopPropagation();
+
+    if (!isAuthenticated) {
+      navigate("/login", { state: { from: "/menu" } });
+      return;
+    }
+
     const ok = await addItem(id, 1);
     if (!ok) {
       console.error("Failed to add", name, "to cart");
